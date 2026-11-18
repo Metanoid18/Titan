@@ -303,7 +303,7 @@ svg { display: block; flex: 0 0 auto; }
   .main-area { margin-left: 0; }
   .topbar { height: 58px; flex-basis: 58px; padding-inline: 20px; }
   .mobile-menu { display: none; }
-  .page-content { padding: 32px 22px calc(100px + env(safe-area-inset-bottom)); }
+  .page-content { padding: 32px 22px 34px; }
   .page-heading { margin-bottom: 23px; }
   .page-heading h1 { font-size: 29px; }
   .balance-panel { padding: 24px 22px 21px; }
@@ -321,7 +321,7 @@ svg { display: block; flex: 0 0 auto; }
 @media (max-width: 430px) {
   body { font-size: 14px; }
   .topbar { padding-inline: 17px; }
-  .page-content { padding: 27px 17px calc(96px + env(safe-area-inset-bottom)); }
+  .page-content { padding: 27px 17px 30px; }
   .page-heading h1 { font-size: 27px; }
   .page-heading p { font-size: 13px; }
   .balance-panel { padding: 21px 18px 18px; border-radius: 11px; }
