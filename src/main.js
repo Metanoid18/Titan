@@ -93,13 +93,13 @@ function shell(content) {
       '<div class="nav-label">Workspace</div><nav class="main-nav" aria-label="Main navigation">' +
         navigationItem('Overview', 'overview') + navigationItem('Activity', 'activity') + navigationItem('Wallet', 'wallet') +
       '</nav>' +
-      '<div class="sidebar-bottom"><div class="demo-note"><span class="demo-lock">' + icon('lock', 15) + '</span><span><strong>Demo environment</strong><small>Sample data stored locally</small></span></div></div>' +
+      '' +
     '</aside>' +
     (state.mobileNav ? '<button class="nav-scrim" data-action="close-nav" aria-label="Close navigation"></button>' : '') +
     '<main class="main-area"><header class="topbar">' +
       '<button class="mobile-menu glass-control" data-action="toggle-nav" aria-label="Open navigation">' + icon('menu', 19) + '</button>' +
       '<div class="breadcrumbs"><span>Workspace</span>' + icon('chevron', 13) + '<strong>' + state.page + '</strong></div>' +
-      '<div class="topbar-right"><span class="demo-pill">DEMO</span><button class="account-control glass-control" data-action="account" aria-label="Demo account settings">D</button></div>' +
+      '<div class="topbar-right"><button class="account-control glass-control" data-action="account" aria-label="Account settings">D</button></div>' +
     '</header><div class="page-content">' + content + '</div>' +
     '<footer class="page-footer"><span>Titan</span><span>Illustrative interface · No financial services connected</span></footer>' +
     '</main>' +
@@ -139,22 +139,22 @@ function assetRow(asset) {
 
 function overviewPage() {
   const today = new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).format(new Date());
-  return pageHeading(today.toUpperCase(), 'Overview', 'A straightforward view of your demo account.') +
+  return pageHeading(today.toUpperCase(), 'Overview', 'Your cash and digital assets, in one place.') +
     '<section class="balance-panel">' +
-      '<div class="balance-top"><span class="balance-label">DEMO CASH BALANCE</span><button class="visibility-control" data-action="toggle-balance" aria-label="' + (state.balanceVisible ? 'Hide balance' : 'Show balance') + '">' + icon(state.balanceVisible ? 'eye' : 'eyeOff', 17) + '</button></div>' +
+      '<div class="balance-top"><span class="balance-label">CASH BALANCE</span><button class="visibility-control" data-action="toggle-balance" aria-label="' + (state.balanceVisible ? 'Hide balance' : 'Show balance') + '">' + icon(state.balanceVisible ? 'eye' : 'eyeOff', 17) + '</button></div>' +
       '<div class="balance-value">' + (state.balanceVisible ? money(state.data.cash) : '••••••••') + '</div>' +
-      '<div class="balance-caption">USD · Sample balance</div>' +
+      '<div class="balance-caption">USD balance</div>' +
       '<div class="balance-actions"><button class="action-primary" data-action="send">' + icon('send', 16) + 'Send</button><button data-action="add">' + icon('add', 17) + 'Add funds</button><button data-action="receive">' + icon('receive', 16) + 'Receive</button></div>' +
     '</section>' +
-    '<div class="overview-grid"><section class="content-section assets-section"><div class="section-title"><div><span class="eyebrow">SAMPLE HOLDINGS</span><h2>Digital assets</h2></div><button class="text-action" data-page="Wallet">View wallet ' + icon('chevron', 14) + '</button></div>' +
+    '<div class="overview-grid"><section class="content-section assets-section"><div class="section-title"><div><span class="eyebrow">YOUR ASSETS</span><h2>Digital assets</h2></div><button class="text-action" data-page="Wallet">View wallet ' + icon('chevron', 14) + '</button></div>' +
       '<div class="asset-list">' + assets.map(assetRow).join('') + '</div><p class="section-footnote">Quantities are illustrative. No wallet is connected and no live prices are shown.</p></section>' +
       '<section class="content-section recent-section"><div class="section-title"><div><span class="eyebrow">LATEST</span><h2>Recent activity</h2></div><button class="text-action" data-page="Activity">All activity ' + icon('chevron', 14) + '</button></div>' +
       '<div class="transaction-list">' + (state.data.transactions.length ? state.data.transactions.slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,4).map(transactionRow).join('') : emptyState('No transactions yet','Your activity will appear here.')) + '</div></section></div>';
 }
 
 function walletPage() {
-  return pageHeading('DIGITAL ASSETS', 'Wallet', 'Sample holdings and their network information.') +
-    '<section class="content-section wallet-content"><div class="section-title"><div><span class="eyebrow">YOUR HOLDINGS</span><h2>Assets</h2></div><span class="subtle-meta">3 sample assets</span></div>' +
+  return pageHeading('DIGITAL ASSETS', 'Wallet', 'Your asset balances and network information.') +
+    '<section class="content-section wallet-content"><div class="section-title"><div><span class="eyebrow">YOUR HOLDINGS</span><h2>Assets</h2></div><span class="subtle-meta">3 assets</span></div>' +
       '<div class="asset-list wallet-asset-list">' + assets.map(assetRow).join('') + '</div>' +
       '<div class="wallet-disclaimer"><span>' + icon('lock', 16) + '</span><p>These are illustrative quantities only. Titan is not connected to a wallet, exchange, or blockchain. Balances and transfers are not real.</p></div></section>';
 }
@@ -172,7 +172,7 @@ function filteredTransactions() {
 
 function activityPage() {
   const items = filteredTransactions();
-  return pageHeading('ACCOUNT HISTORY', 'Activity', 'A record of the sample transactions in this browser.') +
+  return pageHeading('ACCOUNT HISTORY', 'Activity', 'A record of your account activity.') +
     '<section class="content-section activity-content"><div class="activity-toolbar">' +
       '<div class="filter-group" role="group" aria-label="Filter transactions">' +
         [['all','All'],['income','Incoming'],['expense','Outgoing']].map(([value,label]) => '<button class="' + (state.filter === value ? 'selected' : '') + '" data-filter="' + value + '">' + label + '</button>').join('') +
@@ -194,7 +194,7 @@ function modalMarkup() {
 
   if (state.modal === 'send' || state.modal === 'add') {
     const sending = state.modal === 'send';
-    title = sending ? 'Send demo funds' : 'Add demo funds';
+    title = sending ? 'Send funds' : 'Add funds';
     content = '<p class="modal-description">' + (sending ? 'Record a simulated outgoing transfer from your demo cash balance.' : 'Increase the sample cash balance stored in this browser.') + '</p>' +
       (sending ? '<label class="field-label" for="recipient">Recipient label</label><input class="form-input" id="recipient" maxlength="40" placeholder="Enter a recipient">' : '') +
       '<label class="field-label" for="amount">Amount (USD)</label><div class="amount-input"><span>$</span><input id="amount" type="number" min="0.01" max="' + (sending ? state.data.cash : 1000000) + '" step="0.01" placeholder="0.00" inputmode="decimal"></div>' +
@@ -205,7 +205,7 @@ function modalMarkup() {
     title = 'Receive';
     content = '<p class="modal-description">A real receive address cannot be displayed because this demo is not connected to a wallet or blockchain.</p><div class="receive-empty">' + icon('wallet', 24) + '<strong>No wallet connected</strong><span>Connect a supported wallet in a future version to receive digital assets.</span></div>';
   } else if (state.modal === 'account') {
-    title = 'Demo settings';
+    title = 'Account settings';
     content = '<div class="settings-line"><span>Environment</span><strong>Local demo</strong></div><div class="settings-line"><span>Storage</span><strong>This browser</strong></div><div class="settings-line"><span>External connections</span><strong>None</strong></div><button class="reset-button" data-action="reset-demo">' + icon('reset', 15) + 'Reset sample data</button>';
   } else if (state.modal === 'asset') {
     const asset = assets.find(item => item.id === state.selectedId);
@@ -276,13 +276,13 @@ function handleAction(action) {
     state.data.cash = sending ? state.data.cash - amount : state.data.cash + amount;
     state.data.transactions.unshift({
       id: 'tx-' + Date.now(),
-      name: sending ? 'Transfer to ' + recipient : 'Added demo funds',
-      detail: sending ? 'Simulated outgoing transfer' : 'Manual demo balance adjustment',
+      name: sending ? 'Transfer to ' + recipient : 'Funds added',
+      detail: sending ? 'Prototype transfer' : 'Prototype balance adjustment',
       date: new Date().toISOString(),
       amount,
       type: sending ? 'expense' : 'income',
       category: sending ? 'Transfer' : 'Income',
-      method: 'Demo balance'
+      method: 'Local prototype'
     });
     persist();
     state.modal = null;
