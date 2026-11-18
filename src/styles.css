@@ -359,3 +359,147 @@ svg { display: block; flex: 0 0 auto; }
   .sidebar { background: #15181b; }
   .topbar { background: #0b0c0e; }
 }
+
+/* Responsive product shell and interaction surfaces */
+.topbar-context {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+.topbar-brand {
+  color: var(--text);
+  font: 800 11px Manrope, sans-serif;
+  letter-spacing: 2px;
+}
+.topbar-divider { color: var(--subtle); }
+.topbar-context strong { color: var(--text); font-weight: 500; }
+.account-control { cursor: pointer; transition: background .16s ease, border-color .16s ease; }
+.account-control:hover { background: rgba(255,255,255,.1); border-color: var(--gold); }
+.sheet-grabber { display: none; }
+body.has-modal { overflow: hidden; }
+
+@media (min-width: 761px) {
+  .topbar-brand { display: none; }
+  .modal-backdrop[data-modal-kind="account"] { align-items: start; justify-items: end; padding: 76px clamp(28px,4.2vw,64px) 20px; }
+  .modal-backdrop[data-modal-kind="account"] .modal-panel {
+    width: min(360px,100%);
+    max-height: min(72vh,560px);
+    border-radius: 13px;
+  }
+}
+
+@media (max-width: 760px) {
+  .topbar {
+    height: 60px;
+    flex-basis: 60px;
+    padding-inline: 20px;
+  }
+  .topbar-context { gap: 9px; font-size: 12px; }
+  .topbar-brand { display: inline; }
+  .account-control { width: 36px; height: 36px; }
+  .page-content {
+    padding: 30px 22px calc(104px + env(safe-area-inset-bottom));
+  }
+  .sidebar {
+    height: calc(68px + env(safe-area-inset-bottom));
+    padding: 6px 12px calc(6px + env(safe-area-inset-bottom));
+  }
+  .main-nav { gap: 8px; }
+  .nav-item {
+    min-height: 52px;
+    border: 0;
+    border-radius: 10px;
+  }
+  .nav-item.is-active {
+    background: rgba(216,183,123,.11);
+    border-color: transparent;
+  }
+  .page-footer { display: none; }
+  .toast { bottom: calc(82px + env(safe-area-inset-bottom)); }
+
+  .modal-backdrop {
+    align-items: end;
+    padding: 0;
+    background: rgba(3,4,5,.62);
+  }
+  .modal-panel {
+    width: 100%;
+    max-height: min(78dvh,680px);
+    padding: 12px 22px calc(24px + env(safe-area-inset-bottom));
+    border: 1px solid var(--line-strong);
+    border-bottom: 0;
+    border-radius: 22px 22px 0 0;
+    background: #17191c;
+    box-shadow: 0 -18px 60px rgba(0,0,0,.28);
+  }
+  .sheet-grabber {
+    display: block;
+    width: 36px;
+    height: 4px;
+    margin: 0 auto 15px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.24);
+  }
+  .modal-topline { align-items: center; }
+  .modal-close {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.06);
+  }
+  .modal-panel h2 { margin-top: 4px; font-size: 22px; }
+  .modal-backdrop[data-modal-kind="send"],
+  .modal-backdrop[data-modal-kind="add"] {
+    align-items: stretch;
+    background: #111315;
+  }
+  .modal-backdrop[data-modal-kind="send"] .modal-panel,
+  .modal-backdrop[data-modal-kind="add"] .modal-panel {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    padding: calc(14px + env(safe-area-inset-top)) 22px calc(18px + env(safe-area-inset-bottom));
+    border: 0;
+    border-radius: 0;
+    background: #111315;
+    box-shadow: none;
+  }
+  .modal-backdrop[data-modal-kind="send"] .modal-panel h2,
+  .modal-backdrop[data-modal-kind="add"] .modal-panel h2 { margin-top: 12px; font-size: 27px; }
+  .modal-backdrop[data-modal-kind="send"] .modal-description,
+  .modal-backdrop[data-modal-kind="add"] .modal-description { max-width: 34rem; }
+  .modal-backdrop[data-modal-kind="send"] .modal-submit,
+  .modal-backdrop[data-modal-kind="add"] .modal-submit {
+    position: sticky;
+    bottom: 0;
+    min-height: 50px;
+    margin-top: auto;
+    flex: 0 0 auto;
+  }
+  .modal-backdrop[data-modal-kind="send"] .sheet-grabber,
+  .modal-backdrop[data-modal-kind="add"] .sheet-grabber { display: none; }
+}
+
+@media (max-width: 430px) {
+  .topbar { padding-inline: 17px; }
+  .page-content { padding-inline: 17px; }
+  .modal-panel { padding-inline: 18px; }
+  .modal-backdrop[data-modal-kind="send"] .modal-panel,
+  .modal-backdrop[data-modal-kind="add"] .modal-panel { padding-inline: 18px; }
+}
+
+@media (min-width: 761px) and (max-width: 1024px) {
+  :root { --sidebar-width: 196px; }
+  .page-content { padding-inline: 28px; }
+  .overview-grid { grid-template-columns: minmax(0,1fr); }
+}
+
+@media (min-width: 1440px) {
+  .page-content { padding-top: 52px; }
+  .overview-grid { gap: 44px; }
+}
