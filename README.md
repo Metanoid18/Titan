@@ -1,12 +1,11 @@
 # Titan
 
-Titan is a responsive, demo-only personal finance interface built with **vanilla JavaScript, HTML, and CSS**. Vite is used only as the development server and production build tool.
+Titan is a responsive, demo-only wallet interface built with **vanilla JavaScript, HTML, and CSS**. Vite is used only for local development and production builds.
 
 ## Stack
 
 - Vanilla JavaScript (ES modules)
-- HTML
-- CSS
+- HTML and CSS
 - Vite
 
 No React, TypeScript, component framework, icon package, or runtime UI dependency.
@@ -24,17 +23,19 @@ Create a production build with:
 npm run build
 ```
 
-## Demo behavior
+## Included screens
 
-- Overview combines sample cash and digital-asset values.
-- Wallet shows illustrative holdings and a calculated allocation.
-- Activity supports search, type filters, sorting, and transaction details.
-- Cards provides a visual-only card preview and local freeze-state interaction.
-- Add-funds and send flows update demo cash and transaction history in local browser storage.
-- Reset demo data restores the original sample dataset.
+- **Overview:** demo cash balance, essential actions, sample asset quantities, and recent activity.
+- **Activity:** searchable, filterable, sortable sample transaction history.
+- **Wallet:** sample asset quantities and network labels, without fabricated market prices.
 
-All values and transactions are fictional sample data. No bank, payment processor, card issuer, exchange, or blockchain is connected. Do not send real funds or assets to the sample address shown in the receive preview.
+## Demo limitations
 
-## Data
+Titan is a front-end prototype. It is not connected to a bank, payment provider, card issuer, exchange, wallet, or blockchain.
 
-Demo cash and transaction history are stored in `localStorage` under `titan-demo-v2`. Asset holdings are fixed illustrative data in `src/main.js`. Clearing browser storage or using Reset demo data restores the sample state.
+- Send and Add funds only adjust the local demo cash balance and transaction list.
+- Receive explains that a real wallet connection is not available. No sample deposit address is provided.
+- Asset quantities and transaction records are fictional.
+- No live prices, portfolio valuations, or real transfers are represented.
+
+Demo cash and transaction history are stored in `localStorage` under `titan-demo-v3`. Use **Demo settings → Reset sample data** to restore the original dataset.
