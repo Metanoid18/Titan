@@ -1,7 +1,6 @@
 import './styles.css';
 
 const STORE = 'titan-demo-v2';
-const SESSION = 'titan-demo-session';
 const seed = {
   cash: 12480.50,
   transactions: [
@@ -122,11 +121,15 @@ function walletPage() {
   assets.map(a=>'<div class="allocation-row"><span><i style="background:'+a.color+'"></i>'+a.name+'</span><strong>'+(a.value/total*100).toFixed(1)+'%</strong></div>').join('')+
   '<p class="fine-print">All asset quantities and valuations are illustrative. No wallet is connected.</p></aside></div>';
 }
-function activityPage() {
+function filteredActivity() {
   let items = state.data.transactions.slice();
   if (state.filter !== 'all') items = items.filter(t=>t.type===state.filter);
   if (state.query.trim()) items = items.filter(t=>(t.name+' '+t.detail+' '+t.category).toLowerCase().includes(state.query.toLowerCase()));
   items.sort((a,b)=>state.sort==='oldest'?new Date(a.date)-new Date(b.date):new Date(b.date)-new Date(a.date));
+  return items;
+}
+function activityPage() {
+  const items = filteredActivity();
   const income = state.data.transactions.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
   const outflow = state.data.transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
   return pageHeader('ACCOUNT HISTORY','Activity','Every recorded movement in your demo account.')+
@@ -218,9 +221,12 @@ document.addEventListener('click', event => {
 });
 document.addEventListener('input', event => {
   if (event.target.id === 'activity-search') {
-    const cursor = event.target.selectionStart; state.query=event.target.value;
-    const y = window.scrollY; renderPage();
-    const input = document.querySelector('#activity-search'); input?.focus(); input?.setSelectionRange(cursor,cursor); window.scrollTo(0,y);
+    state.query = event.target.value;
+    const items = filteredActivity();
+    const list = document.querySelector('.full-transaction-list');
+    const foot = document.querySelector('.table-foot');
+    if (list) list.innerHTML = transactionRows(items,true);
+    if (foot) foot.textContent = 'Showing ' + items.length + ' of ' + state.data.transactions.length + ' sample transactions';
   }
 });
 document.addEventListener('change', event => {
@@ -228,9 +234,9 @@ document.addEventListener('change', event => {
 });
 document.addEventListener('keydown', event => {
   if (event.key === 'Enter' && (state.modal === 'send' || state.modal === 'add')) {
-    event.preventDefault(); handleAction(state.modal === 'send' ? 'confirm-send' : 'confirm-add');
+    if (event.target.id === 'recipient') { event.preventDefault(); document.querySelector('#amount')?.focus(); }
+    else if (event.target.id === 'amount') { event.preventDefault(); handleAction(state.modal === 'send' ? 'confirm-send' : 'confirm-add'); }
   }
   if (event.key === 'Escape' && (state.modal || state.mobileNav)) { state.modal=null; state.mobileNav=false; renderPage(); }
 });
-if (localStorage.getItem(SESSION) !== 'active') localStorage.setItem(SESSION,'active');
 renderPage();
