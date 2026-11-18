@@ -265,7 +265,7 @@ function handleAction(a){
   if(a==='auth-register'){state.authMode='register';state.authError='';render();return;}
   if(a==='auth-login'){state.authMode='login';state.authError='';render();return;}
   if(a==='demo-login'){signIn('demo@titan.app','Alex Morgan');return;}
-  if(a==='auth-home'){event.preventDefault();return;}
+  if(a==='auth-home'){return;}
   if(a==='home'){state.page='Overview';render();return;}
 }
 function render(){
