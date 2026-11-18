@@ -1,13 +1,15 @@
 # Titan
 
-A responsive personal finance and wallet dashboard prototype.
+Titan is a responsive, demo-only personal finance interface built with **vanilla JavaScript, HTML, and CSS**. Vite is used only as the development server and production build tool.
 
 ## Stack
 
-- React + TypeScript
+- Vanilla JavaScript (ES modules)
+- HTML
+- CSS
 - Vite
-- CSS with a small token layer
-- Local storage for demo session and preferences
+
+No React, TypeScript, component framework, icon package, or runtime UI dependency.
 
 ## Run locally
 
@@ -16,14 +18,23 @@ npm install
 npm run dev
 ```
 
-## Demo behaviour
-
-Titan is a front-end prototype. It does not connect to banks, payment networks, exchanges, or wallets. Sign-in is simulated, and all balances, assets, and transactions are sample data stored in the browser.
-
-Use **Continue with demo account** on the sign-in screen to enter the dashboard.
-
-## Build
+Create a production build with:
 
 ```bash
 npm run build
 ```
+
+## Demo behavior
+
+- Overview combines sample cash and digital-asset values.
+- Wallet shows illustrative holdings and a calculated allocation.
+- Activity supports search, type filters, sorting, and transaction details.
+- Cards provides a visual-only card preview and local freeze-state interaction.
+- Add-funds and send flows update demo cash and transaction history in local browser storage.
+- Reset demo data restores the original sample dataset.
+
+All values and transactions are fictional sample data. No bank, payment processor, card issuer, exchange, or blockchain is connected. Do not send real funds or assets to the sample address shown in the receive preview.
+
+## Data
+
+Demo cash and transaction history are stored in `localStorage` under `titan-demo-v2`. Asset holdings are fixed illustrative data in `src/main.js`. Clearing browser storage or using Reset demo data restores the sample state.
