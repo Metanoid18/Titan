@@ -104,7 +104,8 @@ function overview() {
   const outflow = state.data.transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
   const total = totalAssets();
   const alloc = assets.map(a=>({ ...a, share: a.value / total * 100 }));
-  return pageHeader('WEDNESDAY, NOVEMBER 18, 2026','Your money, in focus.','A clear picture of your cash and digital assets.')+
+  const todayLabel = new Intl.DateTimeFormat('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' }).format(new Date()).toUpperCase();
+  return pageHeader(todayLabel,'Your money, in focus.','A clear picture of your cash and digital assets.')+
     '<div class="overview-layout"><div class="overview-primary">'+balanceCard()+
     '<div class="quick-strip"><button data-action="send"><span class="quick-icon dark">'+icon('send',17)+'</span><span><strong>Send money</strong><small>Make a demo transfer</small></span>'+icon('chevron',14)+'</button><button data-action="add"><span class="quick-icon">'+icon('plus',18)+'</span><span><strong>Add funds</strong><small>Adjust demo cash</small></span>'+icon('chevron',14)+'</button><button data-action="receive"><span class="quick-icon">'+icon('receive',17)+'</span><span><strong>Receive</strong><small>View receive details</small></span>'+icon('chevron',14)+'</button></div>'+
     '<section class="surface-card activity-card"><div class="section-heading"><div><span class="eyebrow">LATEST MOVEMENTS</span><h2>Recent activity</h2></div><button class="subtle-link" data-page="Activity">See all activity '+icon('arrow',13)+'</button></div>'+transactionRows(items)+'</section></div>'+
@@ -188,7 +189,7 @@ function handleAction(action, el) {
   if (action === 'confirm-add' || action === 'confirm-send') {
     const amount = Number(document.querySelector('#amount')?.value);
     const recipient = document.querySelector('#recipient')?.value.trim();
-    if (!Number.isFinite(amount) || amount <= 0) { notify('Enter a valid amount'); return; }
+    if (!Number.isFinite(amount) || amount <= 0 || amount > 1000000) { notify('Enter an amount between $0.01 and $1,000,000'); return; }
     if (action === 'confirm-send' && !recipient) { notify('Add a recipient label'); return; }
     if (action === 'confirm-send' && amount > state.data.cash) { notify('Amount exceeds available demo cash'); return; }
     if (action === 'confirm-send') state.data.cash -= amount; else state.data.cash += amount;
@@ -226,6 +227,9 @@ document.addEventListener('change', event => {
   if (event.target.id === 'activity-sort') { state.sort=event.target.value; renderPage(); }
 });
 document.addEventListener('keydown', event => {
+  if (event.key === 'Enter' && (state.modal === 'send' || state.modal === 'add')) {
+    event.preventDefault(); handleAction(state.modal === 'send' ? 'confirm-send' : 'confirm-add');
+  }
   if (event.key === 'Escape' && (state.modal || state.mobileNav)) { state.modal=null; state.mobileNav=false; renderPage(); }
 });
 if (localStorage.getItem(SESSION) !== 'active') localStorage.setItem(SESSION,'active');
