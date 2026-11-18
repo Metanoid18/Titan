@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
-  ArrowDownLeft, ArrowDownRight, ArrowLeftRight, ArrowUpRight, Bell, Bitcoin,
-  Check, ChevronDown, ChevronRight, CircleHelp, Copy, CreditCard, Download,
-  Eye, EyeOff, Home, LayoutGrid, LogOut, Menu, MoreHorizontal, Plus, Search,
-  Settings, ShieldCheck, Sparkles, TrendingUp, Wallet, X, Zap,
+  ArrowDownLeft, ArrowLeftRight, ArrowUpRight, Bell, Check, ChevronDown,
+  ChevronRight, CircleHelp, Copy, CreditCard, Eye, EyeOff, Home, LayoutGrid,
+  LogOut, Menu, MoreHorizontal, Plus, Search, ShieldCheck, TrendingUp, Wallet, X, Zap,
 } from 'lucide-react'
 import { chartValues, initialAssets, initialTransactions, type Transaction } from './data'
 
