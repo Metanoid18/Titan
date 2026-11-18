@@ -98,10 +98,9 @@ function shell(content) {
     (state.mobileNav ? '<button class="nav-scrim" data-action="close-nav" aria-label="Close navigation"></button>' : '') +
     '<main class="main-area"><header class="topbar">' +
       '<button class="mobile-menu glass-control" data-action="toggle-nav" aria-label="Open navigation">' + icon('menu', 19) + '</button>' +
-      '<div class="breadcrumbs"><span>Workspace</span>' + icon('chevron', 13) + '<strong>' + state.page + '</strong></div>' +
       '<div class="topbar-right"><button class="account-control glass-control" data-action="account" aria-label="Account settings">D</button></div>' +
     '</header><div class="page-content">' + content + '</div>' +
-    '<footer class="page-footer"><span>Titan</span><span>Illustrative interface · No financial services connected</span></footer>' +
+    '<footer class="page-footer"><span>Titan</span><span>Prototype interface · No external accounts or networks connected</span></footer>' +
     '</main>' +
     (state.modal ? modalMarkup() : '') +
     (state.toast ? '<div class="toast" role="status">' + icon('check', 16) + escapeHTML(state.toast) + '</div>' : '') +
@@ -195,24 +194,24 @@ function modalMarkup() {
   if (state.modal === 'send' || state.modal === 'add') {
     const sending = state.modal === 'send';
     title = sending ? 'Send funds' : 'Add funds';
-    content = '<p class="modal-description">' + (sending ? 'Record a simulated outgoing transfer from your demo cash balance.' : 'Increase the sample cash balance stored in this browser.') + '</p>' +
+    content = '<p class="modal-description">' + (sending ? 'Record a simulated transfer from this prototype balance.' : 'Adjust the prototype balance stored in this browser.') + '</p>' +
       (sending ? '<label class="field-label" for="recipient">Recipient label</label><input class="form-input" id="recipient" maxlength="40" placeholder="Enter a recipient">' : '') +
       '<label class="field-label" for="amount">Amount (USD)</label><div class="amount-input"><span>$</span><input id="amount" type="number" min="0.01" max="' + (sending ? state.data.cash : 1000000) + '" step="0.01" placeholder="0.00" inputmode="decimal"></div>' +
-      (sending ? '<div class="available-balance"><span>Available demo cash</span><strong>' + money(state.data.cash) + '</strong></div>' : '') +
+      (sending ? '<div class="available-balance"><span>Available balance</span><strong>' + money(state.data.cash) + '</strong></div>' : '') +
       '<p class="modal-notice">' + icon('lock', 15) + ' Demo only. No payment or transfer will take place.</p>' +
-      '<button class="modal-submit" data-action="confirm-' + state.modal + '">' + (sending ? 'Review transfer' : 'Add to demo balance') + '</button>';
+      '<button class="modal-submit" data-action="confirm-' + state.modal + '">' + (sending ? 'Review transfer' : 'Add funds') + '</button>';
   } else if (state.modal === 'receive') {
     title = 'Receive';
-    content = '<p class="modal-description">A real receive address cannot be displayed because this demo is not connected to a wallet or blockchain.</p><div class="receive-empty">' + icon('wallet', 24) + '<strong>No wallet connected</strong><span>Connect a supported wallet in a future version to receive digital assets.</span></div>';
+    content = '<p class="modal-description">A receive address is unavailable because no wallet or blockchain connection is configured.</p><div class="receive-empty">' + icon('wallet', 24) + '<strong>No wallet connected</strong><span>Connect a supported wallet in a future version to receive digital assets.</span></div>';
   } else if (state.modal === 'account') {
     title = 'Account settings';
-    content = '<div class="settings-line"><span>Environment</span><strong>Local demo</strong></div><div class="settings-line"><span>Storage</span><strong>This browser</strong></div><div class="settings-line"><span>External connections</span><strong>None</strong></div><button class="reset-button" data-action="reset-demo">' + icon('reset', 15) + 'Reset sample data</button>';
+    content = '<div class="settings-line"><span>Environment</span><strong>Prototype</strong></div><div class="settings-line"><span>Storage</span><strong>This browser</strong></div><div class="settings-line"><span>External connections</span><strong>None</strong></div><button class="reset-button" data-action="reset-demo">' + icon('reset', 15) + 'Reset sample data</button>';
   } else if (state.modal === 'asset') {
     const asset = assets.find(item => item.id === state.selectedId);
     if (asset) {
       title = asset.name;
       content = '<div class="asset-modal-head"><span class="asset-symbol ' + asset.id + '">' + (asset.id === 'btc' ? '₿' : asset.id === 'eth' ? '◆' : '◎') + '</span><div><strong>' + asset.name + '</strong><small>' + asset.symbol + '</small></div></div>' +
-        '<div class="asset-modal-quantity"><span>Sample quantity</span><strong>' + quantity(asset.quantity) + ' ' + asset.symbol + '</strong></div>' +
+        '<div class="asset-modal-quantity"><span>Quantity</span><strong>' + quantity(asset.quantity) + ' ' + asset.symbol + '</strong></div>' +
         '<div class="settings-line"><span>Network</span><strong>' + asset.network + '</strong></div><p class="modal-notice">' + icon('lock', 15) + ' Illustrative holding. No wallet is connected.</p>';
     }
   } else if (state.modal === 'transaction') {
@@ -228,7 +227,7 @@ function modalMarkup() {
     }
   }
 
-  return '<div class="modal-backdrop" data-action="backdrop-close"><section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-topline"><span class="eyebrow">TITAN · DEMO</span>' + close + '</div><h2 id="modal-title">' + title + '</h2>' + content + '</section></div>';
+  return '<div class="modal-backdrop" data-action="backdrop-close"><section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-topline"><span class="eyebrow">ACCOUNT</span>' + close + '</div><h2 id="modal-title">' + title + '</h2>' + content + '</section></div>';
 }
 
 function openModal(name, id = null) {
@@ -269,7 +268,7 @@ function handleAction(action) {
       return;
     }
     if (sending && amount > state.data.cash) {
-      showToast('Amount exceeds the demo cash balance');
+      showToast('Amount exceeds the available balance');
       return;
     }
 
