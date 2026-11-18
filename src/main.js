@@ -62,8 +62,7 @@ const state = {
   sort: 'newest',
   modal: null,
   selectedId: null,
-  toast: '',
-  mobileNav: false
+  toast: ''
 };
 
 function persist() {
@@ -294,6 +293,7 @@ function render() {
   const app = document.querySelector('#app');
   const page = state.page === 'Activity' ? activityPage() : state.page === 'Wallet' ? walletPage() : overviewPage();
   app.innerHTML = shell(page);
+  document.body.classList.toggle('has-modal', Boolean(state.modal));
 }
 
 document.addEventListener('click', event => {
