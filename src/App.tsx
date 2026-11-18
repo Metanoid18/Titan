@@ -58,13 +58,13 @@ function App() {
     const value = Number(amount)
     if (!Number.isFinite(value) || value <= 0) return
     if (modal === 'add') {
-      setCash(current => current + value)
-      setTransactions(current => [{ id: Date.now(), name: 'Added funds', detail: 'Demo balance adjustment', date: 'Just now', amount: value, kind: 'income', category: 'Income', symbol: '+' }, ...current])
+      setCash((current: number) => current + value)
+      setTransactions((current: Transaction[]) => [{ id: Date.now(), name: 'Added funds', detail: 'Demo balance adjustment', date: 'Just now', amount: value, kind: 'income', category: 'Income', symbol: '+' }, ...current])
       notify('Demo funds added to your balance')
     } else if (modal === 'send') {
       if (value > cash) { notify('Not enough demo cash for that transfer'); return }
-      setCash(current => current - value)
-      setTransactions(current => [{ id: Date.now(), name: 'Demo transfer', detail: 'Simulated payment', date: 'Just now', amount: value, kind: 'expense', category: 'Transfer', symbol: '↗' }, ...current])
+      setCash((current: number) => current - value)
+      setTransactions((current: Transaction[]) => [{ id: Date.now(), name: 'Demo transfer', detail: 'Simulated payment', date: 'Just now', amount: value, kind: 'expense', category: 'Transfer', symbol: '↗' }, ...current])
       notify('Demo transfer completed')
     }
   }
