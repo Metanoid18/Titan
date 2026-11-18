@@ -206,7 +206,14 @@ document.addEventListener('click', event => {
   if (target.dataset.filter) { state.filter=target.dataset.filter; renderPage(); return; }
   if (target.dataset.asset) { state.selectedAsset=target.dataset.asset; openModal('asset'); return; }
   if (target.dataset.transaction) { state.selectedAsset=Number(target.dataset.transaction); openModal('transaction'); return; }
-  if (target.dataset.action) handleAction(target.dataset.action,target);
+  if (target.dataset.action === 'backdrop-close') {
+    if (event.target === target) { state.modal=null; renderPage(); }
+    return;
+  }
+  if (target.dataset.action) {
+    if (target.tagName === 'A') event.preventDefault();
+    handleAction(target.dataset.action,target);
+  }
 });
 document.addEventListener('input', event => {
   if (event.target.id === 'activity-search') {
