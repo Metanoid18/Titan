@@ -195,7 +195,7 @@ function modalMarkup() {
       (sending ? '<label class="field-label" for="recipient">Recipient label</label><input class="form-input" id="recipient" maxlength="40" placeholder="Enter a recipient">' : '') +
       '<label class="field-label" for="amount">Amount (USD)</label><div class="amount-input"><span>$</span><input id="amount" type="number" min="0.01" max="' + (sending ? state.data.cash : 1000000) + '" step="0.01" placeholder="0.00" inputmode="decimal"></div>' +
       (sending ? '<div class="available-balance"><span>Available balance</span><strong>' + money(state.data.cash) + '</strong></div>' : '') +
-      '<p class="modal-notice">' + icon('lock', 15) + ' Demo only. No payment or transfer will take place.</p>' +
+      '<p class="modal-notice">' + icon('lock', 15) + ' Prototype only. No payment or transfer will take place.</p>' +
       '<button class="modal-submit" data-action="confirm-' + state.modal + '">' + (sending ? 'Review transfer' : 'Add funds') + '</button>';
   } else if (state.modal === 'receive') {
     title = 'Receive';
@@ -225,7 +225,7 @@ function modalMarkup() {
   }
 
   const kind = state.modal || 'detail';
-  const context = kind === 'account' ? 'PREFERENCES' : kind === 'send' || kind === 'add' ? 'LOCAL PROTOTYPE' : 'DETAILS';
+  const context = kind === 'account' ? 'PREFERENCES' : kind === 'send' ? 'TRANSFER' : kind === 'add' ? 'BALANCE' : 'DETAILS';
   return '<div class="modal-backdrop" data-modal-kind="' + kind + '" data-action="backdrop-close"><section class="modal-panel" data-modal-panel role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="sheet-grabber" aria-hidden="true"></div><div class="modal-topline"><span class="eyebrow">' + context + '</span>' + close + '</div><h2 id="modal-title">' + title + '</h2>' + content + '</section></div>';
 }
 
