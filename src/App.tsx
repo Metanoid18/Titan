@@ -21,7 +21,7 @@ function App() {
   const [transactions, setTransactions] = useState<Transaction[]>(() => {
     try { return JSON.parse(localStorage.getItem(STORAGE) || 'null')?.transactions || initialTransactions } catch { return initialTransactions }
   })
-  const [cash, setCash] = useState(() => {
+  const [cash, setCash] = useState<number>(() => {
     try { return JSON.parse(localStorage.getItem(STORAGE) || 'null')?.cash ?? 12480.5 } catch { return 12480.5 }
   })
   const [amount, setAmount] = useState('')
