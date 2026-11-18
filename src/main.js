@@ -88,17 +88,15 @@ function navigationItem(page, glyph) {
 
 function shell(content) {
   return '<div class="app-shell">' +
-    '<aside class="sidebar ' + (state.mobileNav ? 'is-open' : '') + '">' +
+    '<aside class="sidebar">' +
       '<a class="brand" href="#" data-action="home" aria-label="Titan home"><span class="brand-mark"><i></i></span><span>TITAN</span></a>' +
       '<div class="nav-label">Workspace</div><nav class="main-nav" aria-label="Main navigation">' +
         navigationItem('Overview', 'overview') + navigationItem('Activity', 'activity') + navigationItem('Wallet', 'wallet') +
       '</nav>' +
-      '' +
     '</aside>' +
-    (state.mobileNav ? '<button class="nav-scrim" data-action="close-nav" aria-label="Close navigation"></button>' : '') +
     '<main class="main-area"><header class="topbar">' +
-      '<button class="mobile-menu glass-control" data-action="toggle-nav" aria-label="Open navigation">' + icon('menu', 19) + '</button>' +
-      '<div class="topbar-right"><button class="account-control glass-control" data-action="account" aria-label="Account settings">D</button></div>' +
+      '<div class="topbar-context"><span class="topbar-brand">TITAN</span><span class="topbar-divider">/</span><strong>' + state.page + '</strong></div>' +
+      '<div class="topbar-right"><button class="account-control" data-action="account" aria-label="Open account settings">D</button></div>' +
     '</header><div class="page-content">' + content + '</div>' +
     '<footer class="page-footer"><span>Titan</span><span>Prototype interface · No external accounts or networks connected</span></footer>' +
     '</main>' +
@@ -143,7 +141,7 @@ function overviewPage() {
       '<div class="balance-top"><span class="balance-label">CASH BALANCE</span><button class="visibility-control" data-action="toggle-balance" aria-label="' + (state.balanceVisible ? 'Hide balance' : 'Show balance') + '">' + icon(state.balanceVisible ? 'eye' : 'eyeOff', 17) + '</button></div>' +
       '<div class="balance-value">' + (state.balanceVisible ? money(state.data.cash) : '••••••••') + '</div>' +
       '<div class="balance-caption">USD balance</div>' +
-      '<div class="balance-actions"><button class="action-primary" data-action="send">' + icon('send', 16) + 'Send</button><button data-action="add">' + icon('add', 17) + 'Add funds</button><button data-action="receive">' + icon('receive', 16) + 'Receive</button></div>' +
+      '<div class="balance-actions"><button class="action-primary" data-action="send">' + icon('send', 16) + 'Send</button><button data-action="add">' + icon('add', 17) + 'Add funds</button></div>' +
     '</section>' +
     '<div class="overview-grid"><section class="content-section assets-section"><div class="section-title"><div><span class="eyebrow">YOUR ASSETS</span><h2>Digital assets</h2></div><button class="text-action" data-page="Wallet">View wallet ' + icon('chevron', 14) + '</button></div>' +
       '<div class="asset-list">' + assets.map(assetRow).join('') + '</div><p class="section-footnote">Quantities are illustrative. No wallet is connected and no live prices are shown.</p></section>' +
@@ -227,7 +225,9 @@ function modalMarkup() {
     }
   }
 
-  return '<div class="modal-backdrop" data-action="backdrop-close"><section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-topline"><span class="eyebrow">ACCOUNT</span>' + close + '</div><h2 id="modal-title">' + title + '</h2>' + content + '</section></div>';
+  const kind = state.modal || 'detail';
+  const context = kind === 'account' ? 'PREFERENCES' : kind === 'send' || kind === 'add' ? 'LOCAL PROTOTYPE' : 'DETAILS';
+  return '<div class="modal-backdrop" data-modal-kind="' + kind + '" data-action="backdrop-close"><section class="modal-panel" data-modal-panel role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="sheet-grabber" aria-hidden="true"></div><div class="modal-topline"><span class="eyebrow">' + context + '</span>' + close + '</div><h2 id="modal-title">' + title + '</h2>' + content + '</section></div>';
 }
 
 function openModal(name, id = null) {
@@ -240,8 +240,6 @@ function openModal(name, id = null) {
 
 function handleAction(action) {
   if (action === 'home') state.page = 'Overview';
-  else if (action === 'toggle-nav') state.mobileNav = !state.mobileNav;
-  else if (action === 'close-nav') state.mobileNav = false;
   else if (action === 'close-modal') state.modal = null;
   else if (action === 'toggle-balance') state.balanceVisible = !state.balanceVisible;
   else if (['send','add','receive','account'].includes(action)) { openModal(action); return; }
@@ -360,9 +358,8 @@ document.addEventListener('change', event => {
 });
 
 document.addEventListener('keydown', event => {
-  if (event.key === 'Escape' && (state.modal || state.mobileNav)) {
+  if (event.key === 'Escape' && state.modal) {
     state.modal = null;
-    state.mobileNav = false;
     render();
   }
   if (event.key === 'Enter' && (state.modal === 'send' || state.modal === 'add')) {
