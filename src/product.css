@@ -421,6 +421,7 @@ body.has-modal { overflow:hidden; }
     transition:transform 260ms var(--ease-drawer),visibility 260ms;
   }
   .app-shell.nav-open .sidebar { transform:translate3d(0,0,0);visibility:visible;pointer-events:auto; }
+  body.has-nav-open { overflow:hidden; }
   .sidebar-header { width:100%;margin-bottom:38px; }
   .sidebar .brand { display:flex;align-self:flex-start;margin:0;padding:4px 10px; }
   .sidebar .nav-label { display:block;margin:0 10px 12px;color:#858b91;font-size:10px;letter-spacing:1.2px;text-transform:uppercase; }
