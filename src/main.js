@@ -48,6 +48,7 @@ const glyphs = {
   down:'<path d="m5 9 7 7 7-7"/>',
   right:'<path d="m9 18 6-6-6-6"/>',
   eye:'<path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"/><circle cx="12" cy="12" r="2.5"/>',
+  'eye-off':'<path d="m3 3 18 18M10.6 10.6a2 2 0 0 0 2.8 2.8"/><path d="M9.9 5.2A11.5 11.5 0 0 1 12 5c6.5 0 10 7 10 7a16 16 0 0 1-3.2 3.8M6.2 6.2C3.5 8 2 12 2 12s3.5 7 10 7c1.3 0 2.5-.3 3.5-.8"/>',
   close:'<path d="m18 6-12 12M6 6l12 12"/>',
   lock:'<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',
   check:'<path d="m5 12 4 4L19 6"/>',
@@ -57,7 +58,7 @@ const glyphs = {
   copy:'<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/>',
   freeze:'<path d="M12 2v20M4.9 6l14.2 12M4.9 18 19.1 6M3 12h18"/>'
 };
-const icon = (name, size=18) => '<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(glyphs[name]||'')+'</svg>';
+const icon = (name, size=18) => { const px=size<=15?16:size<=18?18:size<=21?20:24; return '<svg width="'+px+'" height="'+px+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(glyphs[name]||'')+'</svg>'; };
 const money = n => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(Number(n)||0);
 const fmtDate = d => new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric',year:'numeric'}).format(new Date(d));
 const fmtTime = d => new Intl.DateTimeFormat('en-US',{hour:'numeric',minute:'2-digit'}).format(new Date(d));
@@ -92,9 +93,19 @@ const state = {
 };
 
 function toast(message){
-  state.toast=message; render();
+  state.toast=message;
+  let node=document.querySelector('#app .toast');
+  if(!node){render();node=document.querySelector('#app .toast');}
+  if(node){
+    node.innerHTML=icon('check',16)+safe(message);
+    node.dataset.visible='true';
+  }
   clearTimeout(toast.timer);
-  toast.timer=setTimeout(()=>{state.toast='';render();},2400);
+  toast.timer=setTimeout(()=>{
+    state.toast='';
+    const current=document.querySelector('#app .toast');
+    if(current)current.dataset.visible='false';
+  },2400);
 }
 function totalCash(){return state.data.accounts.reduce((sum,a)=>sum+a.balance,0);}
 function totalIncome(){return state.data.transactions.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);}
@@ -109,13 +120,13 @@ function authView(){
 }
 function shell(content){
   const initials=(state.data.profile.initials||'AM').slice(0,2);
-  return '<div class="app-shell '+(state.navOpen?'nav-open':'')+'"><aside class="sidebar" id="primary-navigation" aria-hidden="'+(window.matchMedia('(max-width:760px)').matches&&!state.navOpen?'true':'false')+'"><div class="sidebar-header"><a class="brand" href="#" data-action="home"><span class="brand-mark"><i></i></span><span>TITAN</span></a></div><div class="nav-label">Workspace</div><nav class="main-nav" aria-label="Main navigation">'+navItem('Overview','overview')+navItem('Accounts','accounts')+navItem('Cards','cards')+navItem('Crypto','crypto')+navItem('Activity','activity')+navItem('Analytics','analytics')+'</nav><div class="sidebar-bottom"><div class="sidebar-note"><span class="eyebrow">YOUR SPACE</span><p>Everything in one view.</p></div>'+navItem('Settings','settings')+'</div></aside>'+(state.navOpen?'<button class="nav-scrim" data-action="close-navigation" aria-label="Close navigation"></button>':'')+'<main class="main-area"><header class="topbar"><div class="topbar-context"><button class="mobile-menu" data-action="toggle-navigation" aria-label="'+(state.navOpen?'Close navigation':'Open navigation')+'" aria-controls="primary-navigation" aria-expanded="'+(state.navOpen?'true':'false')+'">'+icon(state.navOpen?'close':'menu',19)+'</button><span class="topbar-brand">TITAN</span><span class="topbar-divider">/</span><strong>'+pageTitle()+'</strong></div><div class="topbar-right"><span class="topbar-date">'+new Intl.DateTimeFormat('en-US',{weekday:'short',month:'short',day:'numeric'}).format(new Date())+'</span><button class="account-control" data-page="Settings" aria-label="Open profile settings">'+safe(initials)+'</button></div></header><div class="page-content">'+content+'</div><footer class="page-footer"><span>TITAN</span><span>Sample environment · No external accounts or networks connected</span></footer></main>'+(state.modal?modalView():'')+(state.toast?'<div class="toast" role="status">'+icon('check',16)+safe(state.toast)+'</div>':'')+'</div>';
+  return '<div class="app-shell '+(state.navOpen?'nav-open':'')+'"><aside class="sidebar" id="primary-navigation" aria-hidden="'+(window.matchMedia('(max-width:760px)').matches&&!state.navOpen?'true':'false')+'"><div class="sidebar-header"><a class="brand" href="#" data-action="home"><span class="brand-mark"><i></i></span><span>TITAN</span></a></div><div class="nav-label">Workspace</div><nav class="main-nav" aria-label="Main navigation">'+navItem('Overview','overview')+navItem('Accounts','accounts')+navItem('Cards','cards')+navItem('Crypto','crypto')+navItem('Activity','activity')+navItem('Analytics','analytics')+'</nav><div class="sidebar-bottom"><div class="sidebar-note"><span class="eyebrow">YOUR SPACE</span><p>Everything in one view.</p></div>'+navItem('Settings','settings')+'</div></aside>'+'<button class="nav-scrim" data-action="close-navigation" aria-label="Close navigation" aria-hidden="'+(!state.navOpen)+'" tabindex="'+(state.navOpen?'0':'-1')+'"></button>'+'<main class="main-area"><header class="topbar"><div class="topbar-context"><button class="mobile-menu" data-action="toggle-navigation" aria-label="'+(state.navOpen?'Close navigation':'Open navigation')+'" aria-controls="primary-navigation" aria-expanded="'+(state.navOpen?'true':'false')+'">'+icon(state.navOpen?'close':'menu',19)+'</button><span class="topbar-brand">TITAN</span><span class="topbar-divider">/</span><strong>'+pageTitle()+'</strong></div><div class="topbar-right"><span class="topbar-date">'+new Intl.DateTimeFormat('en-US',{weekday:'short',month:'short',day:'numeric'}).format(new Date())+'</span><button class="account-control" data-page="Settings" aria-label="Open profile settings">'+safe(initials)+'</button></div></header><div class="page-content">'+content+'</div><footer class="page-footer"><span>TITAN</span><span>Sample environment · No external accounts or networks connected</span></footer></main>'+(state.modal?modalView():'')+'<div class="toast" role="status" aria-live="polite" data-visible="'+(state.toast?'true':'false')+'">'+(state.toast?icon('check',16)+safe(state.toast):'')+'</div>'+'</div>';
 }
 function heading(kicker,title,desc,action=''){
   return '<div class="page-heading"><div><span class="eyebrow">'+kicker+'</span><h1>'+title+'</h1><p>'+desc+'</p></div>'+action+'</div>';
 }
 function balanceCard(){
-  return '<section class="hero-balance"><div class="hero-top"><span class="eyebrow">TOTAL ACCOUNT BALANCE</span><button class="visibility-control" data-action="toggle-balance" aria-label="Toggle balance visibility">'+icon('eye',17)+'</button></div><div class="hero-amount">'+(state.hidden?'••••••••':money(totalCash()))+'</div><div class="hero-bottom"><span>Across '+state.data.accounts.length+' accounts</span><span class="hero-currency">USD <span>·</span> Sample balance</span></div><div class="hero-actions"><button class="primary-button" data-action="transfer">'+icon('send',16)+'Transfer</button><button class="secondary-button" data-action="add-funds">'+icon('plus',17)+'Add funds</button><button class="secondary-button" data-page="Accounts">View accounts '+icon('right',14)+'</button></div></section>';
+  return '<section class="hero-balance"><div class="hero-top"><span class="eyebrow">TOTAL ACCOUNT BALANCE</span><button class="visibility-control" data-action="toggle-balance" aria-label="'+(state.hidden?'Show balances':'Hide balances')+'" aria-pressed="'+state.hidden+'">'+icon(state.hidden?'eye-off':'eye',18)+'</button></div><div class="hero-amount">'+(state.hidden?'••••••••':money(totalCash()))+'</div><div class="hero-bottom"><span>Across '+state.data.accounts.length+' accounts</span><span class="hero-currency">USD <span>·</span> Sample balance</span></div><div class="hero-actions"><button class="primary-button" data-action="transfer">'+icon('send',16)+'Transfer</button><button class="secondary-button" data-action="add-funds">'+icon('plus',17)+'Add funds</button><button class="secondary-button" data-page="Accounts">View accounts '+icon('right',14)+'</button></div></section>';
 }
 function transactionRow(t){
   const incoming=t.type==='income';
@@ -243,11 +254,55 @@ function doTransfer(fund){
     from.balance-=amount;to.balance+=amount;
     state.data.transactions.unshift({id:'t'+Date.now(),name:'Internal transfer',detail:from.name+' to '+to.name,date:new Date().toISOString(),amount,type:'expense',category:'Transfer',account:from.name,method:'Internal transfer'});
   }
-  saveData();state.modal=null;toast(fund?'Sample funds added':'Sample transfer recorded');
+  saveData();state.modal=null;render();toast(fund?'Sample funds added':'Sample transfer recorded');
+}
+function updateBalanceVisibility(){
+  const hidden=state.hidden;
+  const amount=document.querySelector('.hero-amount');
+  if(amount)amount.textContent=hidden?'••••••••':money(totalCash());
+  document.querySelectorAll('.account-card').forEach(card=>{
+    const account=state.data.accounts.find(item=>item.id===card.dataset.account);
+    const balance=card.querySelector('.account-balance');
+    if(account&&balance)balance.textContent=hidden?'••••••':money(account.balance);
+  });
+  const button=document.querySelector('.visibility-control');
+  if(button){
+    button.innerHTML=icon(hidden?'eye-off':'eye',18);
+    button.setAttribute('aria-label',hidden?'Show balances':'Hide balances');
+    button.setAttribute('aria-pressed',String(hidden));
+  }
+}
+function setNavigation(open){
+  state.navOpen=Boolean(open);
+  const mobile=window.matchMedia('(max-width:760px)').matches;
+  const panel=document.querySelector('#primary-navigation');
+  const shell=document.querySelector('.app-shell');
+  const toggle=document.querySelector('.mobile-menu');
+  const scrim=document.querySelector('.nav-scrim');
+  shell?.classList.toggle('nav-open',state.navOpen);
+  document.body.classList.toggle('has-nav-open',state.navOpen&&mobile);
+  if(panel){
+    panel.setAttribute('aria-hidden',String(mobile&&!state.navOpen));
+    if('inert' in panel)panel.inert=mobile&&!state.navOpen;
+  }
+  if(toggle){
+    toggle.innerHTML=icon(state.navOpen?'close':'menu',20);
+    toggle.setAttribute('aria-label',state.navOpen?'Close navigation':'Open navigation');
+    toggle.setAttribute('aria-expanded',String(state.navOpen));
+  }
+  if(scrim){
+    scrim.setAttribute('aria-hidden',String(!state.navOpen));
+    scrim.tabIndex=state.navOpen?0:-1;
+  }
+  if(state.navOpen&&mobile){
+    panel?.querySelector('.main-nav .nav-item')?.focus({preventScroll:true});
+  }else if(!state.navOpen&&mobile){
+    toggle?.focus({preventScroll:true});
+  }
 }
 function handleAction(a){
   if(a==='close-modal'){state.modal=null;render();return;}
-  if(a==='toggle-balance'){state.hidden=!state.hidden;render();return;}
+  if(a==='toggle-balance'){state.hidden=!state.hidden;updateBalanceVisibility();return;}
   if(a==='transfer'||a==='add-funds'){openModal(a);return;}
   if(a==='confirm-transfer'||a==='confirm-funds'){doTransfer(a==='confirm-funds');return;}
   if(a==='toggle-card'){
@@ -256,47 +311,37 @@ function handleAction(a){
   if(a==='new-card'){
     const n=state.data.cards.length+1;
     state.data.cards.push({id:'card-'+Date.now(),name:'Titan Virtual '+n,last4:String(Math.floor(1000+Math.random()*9000)),holder:(state.data.profile.name||'ALEX MORGAN').toUpperCase(),status:'Active',kind:'Virtual',limit:500,spent:0,frozen:false});
-    saveData();toast('Sample virtual card created');return;
+    saveData();render();toast('Sample virtual card created');return;
   }
   if(a==='logout'){
     localStorage.removeItem(SESSION_KEY);state.session=null;state.page='Overview';state.modal=null;render();return;
   }
   if(a==='reset-data'){
-    state.data=clone(seed);state.data.profile=clone(seed.profile);saveData();state.modal=null;toast('Sample data restored');return;
+    state.data=clone(seed);state.data.profile=clone(seed.profile);saveData();state.modal=null;render();toast('Sample data restored');return;
   }
   if(a==='auth-register'){state.authMode='register';state.authError='';render();return;}
   if(a==='auth-login'){state.authMode='login';state.authError='';render();return;}
   if(a==='demo-login'){signIn('demo@titan.app','Alex Morgan');return;}
-  if(a==='toggle-navigation'){
-    state.navOpen=!state.navOpen;
-    render();
-    if(state.navOpen && window.matchMedia('(max-width:760px)').matches) {
-      document.querySelector('#primary-navigation .nav-item')?.focus();
-    } else {
-      document.querySelector('.mobile-menu')?.focus();
-    }
-    return;
-  }
-  if(a==='close-navigation'){
-    state.navOpen=false;render();
-    document.querySelector('.mobile-menu')?.focus();
-    return;
-  }
+  if(a==='toggle-navigation'){setNavigation(!state.navOpen);return;}
+  if(a==='close-navigation'){setNavigation(false);return;}
   if(a==='auth-home'){return;}
-  if(a==='home'){state.page='Overview';render();return;}
+  if(a==='home'){state.page='Overview';render(true);return;}
 }
-function render(){
+function render(animatePage=false){
   const app=document.querySelector('#app');
   app.innerHTML=state.session?shell(({
     Overview:overviewPage,Accounts:accountsPage,Cards:cardsPage,Crypto:cryptoPage,Activity:activityPage,Analytics:analyticsPage,Settings:settingsPage
   }[state.page]||overviewPage)()):authView();
   document.body.classList.toggle('has-modal',Boolean(state.modal));
   document.body.classList.toggle('has-nav-open',Boolean(state.navOpen && window.matchMedia('(max-width:760px)').matches));
+  const panel=document.querySelector('#primary-navigation');
+  if(panel){const mobile=window.matchMedia('(max-width:760px)').matches;panel.setAttribute('aria-hidden',String(mobile&&!state.navOpen));if('inert' in panel)panel.inert=mobile&&!state.navOpen;}
+  if(animatePage){const page=document.querySelector('.page-content');page?.classList.add('is-entering');page?.addEventListener('animationend',()=>page.classList.remove('is-entering'),{once:true});}
 }
 document.addEventListener('click',e=>{
   const target=e.target.closest('[data-action],[data-page],[data-filter],[data-account],[data-asset],[data-transaction],[data-card]');
   if(!target)return;
-  if(target.dataset.page){state.page=target.dataset.page;state.modal=null;state.navOpen=false;state.search='';state.filter='all';render();return;}
+  if(target.dataset.page){state.page=target.dataset.page;state.modal=null;state.navOpen=false;state.search='';state.filter='all';render(true);return;}
   if(target.dataset.filter){state.filter=target.dataset.filter;render();return;}
   if(target.dataset.account){openModal('account',target.dataset.account);return;}
   if(target.dataset.asset){openModal('asset',target.dataset.asset);return;}
@@ -324,18 +369,14 @@ document.addEventListener('input',e=>{
 document.addEventListener('change',e=>{if(e.target.id==='activity-sort'){state.sort=e.target.value;render();}});
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'&&state.modal){state.modal=null;render();return;}
-  if(e.key==='Escape'&&state.navOpen){
-    state.navOpen=false;render();
-    document.querySelector('.mobile-menu')?.focus();
-    return;
-  }
+  if(e.key==='Escape'&&state.navOpen){setNavigation(false);return;}
   if(e.key==='Tab'&&state.navOpen&&window.matchMedia('(max-width:760px)').matches){
     const panel=document.querySelector('#primary-navigation');
     const items=panel?.querySelectorAll('.main-nav .nav-item,.sidebar-bottom .nav-item');
     if(items?.length){
       const first=items[0],last=items[items.length-1];
-      if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
-      else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+      if(e.shiftKey&&(document.activeElement===first||!panel?.contains(document.activeElement))){e.preventDefault();last.focus();}
+      else if(!e.shiftKey&&(document.activeElement===last||!panel?.contains(document.activeElement))){e.preventDefault();first.focus();}
     }
   }
 });
