@@ -35,6 +35,7 @@ const seed = {
 };
 
 const glyphs = {
+  menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',
   overview:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
   accounts:'<rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M2.5 10h19M6 15h4"/>',
   cards:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M7 15h3"/>',
@@ -86,7 +87,8 @@ const state = {
   hidden:false,
   toast:'',
   authMode:'login',
-  authError:''
+  authError:'',
+  navOpen:false
 };
 
 function toast(message){
@@ -99,7 +101,7 @@ function totalIncome(){return state.data.transactions.filter(t=>t.type==='income
 function totalSpend(){return state.data.transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);}
 function pageTitle(){return state.page;}
 function navItem(name, glyph){
-  return '<button class="nav-item '+(state.page===name?'active':'')+'" data-page="'+name+'" '+(state.page===name?'aria-current="page"':'')+'>'+icon(glyph,18)+'<span>'+name+'</span></button>';
+  return '<button class="nav-item '+(state.page===name?'active':'')+'" data-page="'+name+'" aria-label="'+name+'" title="'+name+'" '+(state.page===name?'aria-current="page"':'')+'>'+icon(glyph,18)+'<span>'+name+'</span></button>';
 }
 function authView(){
   const register=state.authMode==='register';
@@ -107,7 +109,7 @@ function authView(){
 }
 function shell(content){
   const initials=(state.data.profile.initials||'AM').slice(0,2);
-  return '<div class="app-shell"><aside class="sidebar"><a class="brand" href="#" data-action="home"><span class="brand-mark"><i></i></span><span>TITAN</span></a><div class="nav-label">Workspace</div><nav class="main-nav" aria-label="Main navigation">'+navItem('Overview','overview')+navItem('Accounts','accounts')+navItem('Cards','cards')+navItem('Crypto','crypto')+navItem('Activity','activity')+navItem('Analytics','analytics')+'</nav><div class="sidebar-bottom"><div class="sidebar-note"><span class="eyebrow">YOUR SPACE</span><p>Everything in one view.</p></div>'+navItem('Settings','settings')+'</div></aside><main class="main-area"><header class="topbar"><div class="topbar-context"><span class="topbar-brand">TITAN</span><span class="topbar-divider">/</span><strong>'+pageTitle()+'</strong></div><div class="topbar-right"><span class="topbar-date">'+new Intl.DateTimeFormat('en-US',{weekday:'short',month:'short',day:'numeric'}).format(new Date())+'</span><button class="account-control" data-page="Settings" aria-label="Open profile settings">'+safe(initials)+'</button></div></header><div class="page-content">'+content+'</div><footer class="page-footer"><span>TITAN</span><span>Sample environment · No external accounts or networks connected</span></footer></main><nav class="mobile-nav" aria-label="Mobile navigation">'+navItem('Overview','overview')+navItem('Accounts','accounts')+navItem('Cards','cards')+navItem('Crypto','crypto')+navItem('Activity','activity')+navItem('Analytics','analytics')+navItem('Settings','settings')+'</nav>'+(state.modal?modalView():'')+(state.toast?'<div class="toast" role="status">'+icon('check',16)+safe(state.toast)+'</div>':'')+'</div>';
+  return '<div class="app-shell '+(state.navOpen?'nav-open':'')+'"><aside class="sidebar" id="primary-navigation"><a class="brand" href="#" data-action="home"><span class="brand-mark"><i></i></span><span>TITAN</span></a><div class="nav-label">Workspace</div><nav class="main-nav" aria-label="Main navigation">'+navItem('Overview','overview')+navItem('Accounts','accounts')+navItem('Cards','cards')+navItem('Crypto','crypto')+navItem('Activity','activity')+navItem('Analytics','analytics')+'</nav><div class="sidebar-bottom"><div class="sidebar-note"><span class="eyebrow">YOUR SPACE</span><p>Everything in one view.</p></div>'+navItem('Settings','settings')+'</div></aside>'+(state.navOpen?'<button class="nav-scrim" data-action="close-navigation" aria-label="Close navigation"></button>':'')+'<main class="main-area"><header class="topbar"><div class="topbar-context"><button class="mobile-menu" data-action="toggle-navigation" aria-label="Open navigation" aria-controls="primary-navigation" aria-expanded="'+(state.navOpen?'true':'false')+'">'+icon(state.navOpen?'close':'menu',19)+'</button><span class="topbar-brand">TITAN</span><span class="topbar-divider">/</span><strong>'+pageTitle()+'</strong></div><div class="topbar-right"><span class="topbar-date">'+new Intl.DateTimeFormat('en-US',{weekday:'short',month:'short',day:'numeric'}).format(new Date())+'</span><button class="account-control" data-page="Settings" aria-label="Open profile settings">'+safe(initials)+'</button></div></header><div class="page-content">'+content+'</div><footer class="page-footer"><span>TITAN</span><span>Sample environment · No external accounts or networks connected</span></footer></main>'+(state.modal?modalView():'')+(state.toast?'<div class="toast" role="status">'+icon('check',16)+safe(state.toast)+'</div>':'')+'</div>';
 }
 function heading(kicker,title,desc,action=''){
   return '<div class="page-heading"><div><span class="eyebrow">'+kicker+'</span><h1>'+title+'</h1><p>'+desc+'</p></div>'+action+'</div>';
@@ -265,6 +267,8 @@ function handleAction(a){
   if(a==='auth-register'){state.authMode='register';state.authError='';render();return;}
   if(a==='auth-login'){state.authMode='login';state.authError='';render();return;}
   if(a==='demo-login'){signIn('demo@titan.app','Alex Morgan');return;}
+  if(a==='toggle-navigation'){state.navOpen=!state.navOpen;render();return;}
+  if(a==='close-navigation'){state.navOpen=false;render();return;}
   if(a==='auth-home'){return;}
   if(a==='home'){state.page='Overview';render();return;}
 }
@@ -278,7 +282,7 @@ function render(){
 document.addEventListener('click',e=>{
   const target=e.target.closest('[data-action],[data-page],[data-filter],[data-account],[data-asset],[data-transaction],[data-card]');
   if(!target)return;
-  if(target.dataset.page){state.page=target.dataset.page;state.modal=null;state.search='';state.filter='all';render();return;}
+  if(target.dataset.page){state.page=target.dataset.page;state.modal=null;state.navOpen=false;state.search='';state.filter='all';render();return;}
   if(target.dataset.filter){state.filter=target.dataset.filter;render();return;}
   if(target.dataset.account){openModal('account',target.dataset.account);return;}
   if(target.dataset.asset){openModal('asset',target.dataset.asset);return;}
@@ -305,6 +309,7 @@ document.addEventListener('input',e=>{
 });
 document.addEventListener('change',e=>{if(e.target.id==='activity-sort'){state.sort=e.target.value;render();}});
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'&&state.modal){state.modal=null;render();}
+  if(e.key==='Escape'&&state.modal){state.modal=null;render();return;}
+  if(e.key==='Escape'&&state.navOpen){state.navOpen=false;render();}
 });
 render();
