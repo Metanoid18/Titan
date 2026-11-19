@@ -109,7 +109,7 @@ function authView(){
 }
 function shell(content){
   const initials=(state.data.profile.initials||'AM').slice(0,2);
-  return '<div class="app-shell '+(state.navOpen?'nav-open':'')+'"><aside class="sidebar" id="primary-navigation"><div class="sidebar-header"><a class="brand" href="#" data-action="home"><span class="brand-mark"><i></i></span><span>TITAN</span></a><button class="sidebar-close" data-action="close-navigation" aria-label="Close navigation">'+icon('close',19)+'</button></div><div class="nav-label">Workspace</div><nav class="main-nav" aria-label="Main navigation">'+navItem('Overview','overview')+navItem('Accounts','accounts')+navItem('Cards','cards')+navItem('Crypto','crypto')+navItem('Activity','activity')+navItem('Analytics','analytics')+'</nav><div class="sidebar-bottom"><div class="sidebar-note"><span class="eyebrow">YOUR SPACE</span><p>Everything in one view.</p></div>'+navItem('Settings','settings')+'</div></aside>'+(state.navOpen?'<button class="nav-scrim" data-action="close-navigation" aria-label="Close navigation"></button>':'')+'<main class="main-area"><header class="topbar"><div class="topbar-context"><button class="mobile-menu" data-action="toggle-navigation" aria-label="'+(state.navOpen?'Close navigation':'Open navigation')+'" aria-controls="primary-navigation" aria-expanded="'+(state.navOpen?'true':'false')+'">'+icon(state.navOpen?'close':'menu',19)+'</button><span class="topbar-brand">TITAN</span><span class="topbar-divider">/</span><strong>'+pageTitle()+'</strong></div><div class="topbar-right"><span class="topbar-date">'+new Intl.DateTimeFormat('en-US',{weekday:'short',month:'short',day:'numeric'}).format(new Date())+'</span><button class="account-control" data-page="Settings" aria-label="Open profile settings">'+safe(initials)+'</button></div></header><div class="page-content">'+content+'</div><footer class="page-footer"><span>TITAN</span><span>Sample environment · No external accounts or networks connected</span></footer></main>'+(state.modal?modalView():'')+(state.toast?'<div class="toast" role="status">'+icon('check',16)+safe(state.toast)+'</div>':'')+'</div>';
+  return '<div class="app-shell '+(state.navOpen?'nav-open':'')+'"><aside class="sidebar" id="primary-navigation"><div class="sidebar-header"><a class="brand" href="#" data-action="home"><span class="brand-mark"><i></i></span><span>TITAN</span></a></div><div class="nav-label">Workspace</div><nav class="main-nav" aria-label="Main navigation">'+navItem('Overview','overview')+navItem('Accounts','accounts')+navItem('Cards','cards')+navItem('Crypto','crypto')+navItem('Activity','activity')+navItem('Analytics','analytics')+'</nav><div class="sidebar-bottom"><div class="sidebar-note"><span class="eyebrow">YOUR SPACE</span><p>Everything in one view.</p></div>'+navItem('Settings','settings')+'</div></aside>'+(state.navOpen?'<button class="nav-scrim" data-action="close-navigation" aria-label="Close navigation"></button>':'')+'<main class="main-area"><header class="topbar"><div class="topbar-context"><button class="mobile-menu" data-action="toggle-navigation" aria-label="'+(state.navOpen?'Close navigation':'Open navigation')+'" aria-controls="primary-navigation" aria-expanded="'+(state.navOpen?'true':'false')+'">'+icon(state.navOpen?'close':'menu',19)+'</button><span class="topbar-brand">TITAN</span><span class="topbar-divider">/</span><strong>'+pageTitle()+'</strong></div><div class="topbar-right"><span class="topbar-date">'+new Intl.DateTimeFormat('en-US',{weekday:'short',month:'short',day:'numeric'}).format(new Date())+'</span><button class="account-control" data-page="Settings" aria-label="Open profile settings">'+safe(initials)+'</button></div></header><div class="page-content">'+content+'</div><footer class="page-footer"><span>TITAN</span><span>Sample environment · No external accounts or networks connected</span></footer></main>'+(state.modal?modalView():'')+(state.toast?'<div class="toast" role="status">'+icon('check',16)+safe(state.toast)+'</div>':'')+'</div>';
 }
 function heading(kicker,title,desc,action=''){
   return '<div class="page-heading"><div><span class="eyebrow">'+kicker+'</span><h1>'+title+'</h1><p>'+desc+'</p></div>'+action+'</div>';
@@ -267,8 +267,21 @@ function handleAction(a){
   if(a==='auth-register'){state.authMode='register';state.authError='';render();return;}
   if(a==='auth-login'){state.authMode='login';state.authError='';render();return;}
   if(a==='demo-login'){signIn('demo@titan.app','Alex Morgan');return;}
-  if(a==='toggle-navigation'){state.navOpen=!state.navOpen;render();return;}
-  if(a==='close-navigation'){state.navOpen=false;render();return;}
+  if(a==='toggle-navigation'){
+    state.navOpen=!state.navOpen;
+    render();
+    if(state.navOpen && window.matchMedia('(max-width:760px)').matches) {
+      document.querySelector('#primary-navigation .nav-item')?.focus();
+    } else {
+      document.querySelector('.mobile-menu')?.focus();
+    }
+    return;
+  }
+  if(a==='close-navigation'){
+    state.navOpen=false;render();
+    document.querySelector('.mobile-menu')?.focus();
+    return;
+  }
   if(a==='auth-home'){return;}
   if(a==='home'){state.page='Overview';render();return;}
 }
@@ -278,6 +291,7 @@ function render(){
     Overview:overviewPage,Accounts:accountsPage,Cards:cardsPage,Crypto:cryptoPage,Activity:activityPage,Analytics:analyticsPage,Settings:settingsPage
   }[state.page]||overviewPage)()):authView();
   document.body.classList.toggle('has-modal',Boolean(state.modal));
+  document.body.classList.toggle('has-nav-open',Boolean(state.navOpen && window.matchMedia('(max-width:760px)').matches));
 }
 document.addEventListener('click',e=>{
   const target=e.target.closest('[data-action],[data-page],[data-filter],[data-account],[data-asset],[data-transaction],[data-card]');
@@ -310,6 +324,19 @@ document.addEventListener('input',e=>{
 document.addEventListener('change',e=>{if(e.target.id==='activity-sort'){state.sort=e.target.value;render();}});
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'&&state.modal){state.modal=null;render();return;}
-  if(e.key==='Escape'&&state.navOpen){state.navOpen=false;render();}
+  if(e.key==='Escape'&&state.navOpen){
+    state.navOpen=false;render();
+    document.querySelector('.mobile-menu')?.focus();
+    return;
+  }
+  if(e.key==='Tab'&&state.navOpen&&window.matchMedia('(max-width:760px)').matches){
+    const panel=document.querySelector('#primary-navigation');
+    const items=panel?.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])');
+    if(items?.length){
+      const first=items[0],last=items[items.length-1];
+      if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+      else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+    }
+  }
 });
 render();
