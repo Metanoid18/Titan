@@ -1,5 +1,6 @@
 import './styles.css';
 import './product.css';
+import { calculateTotals, filterAndSortTransactions, formatDate as fmtDate, formatMoney as money, formatTime as fmtTime, modalVariant, normalizeData } from './core.js';
 
 const DATA_KEY = 'titan-product-v1';
 const SESSION_KEY = 'titan-session-v1';
@@ -35,18 +36,18 @@ const seed = {
 };
 
 const glyphs = {
-  menu:'<path d="M3 8h18M7 16h10"/>',
-  overview:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
-  accounts:'<rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M2.5 10h19M6 15h4"/>',
-  cards:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M7 15h3"/>',
-  crypto:'<path d="M12 2v20M17 6.5c0-1.4-1.4-2.5-3.2-2.5H9v16h5c2 0 3.5-1.1 3.5-2.8 0-1.5-1.2-2.6-3-2.9 1.6-.3 2.5-1.3 2.5-2.8Z"/>',
-  activity:'<path d="M3 12h4l3-8 4 16 3-8h4"/>',
-  analytics:'<path d="M4 19V9m8 10V4m8 15v-7"/>',
-  settings:'<circle cx="12" cy="12" r="3"/><path d="m19.4 15 .1.1 1.4 1.1-1.4 2.4-1.7-.7a8 8 0 0 1-1.7 1l-.3 1.8h-2.8l-.3-1.8a8 8 0 0 1-1.7-1l-1.7.7-1.4-2.4 1.4-1.1a7 7 0 0 1 0-2l-1.4-1.1 1.4-2.4 1.7.7a8 8 0 0 1 1.7-1l.3-1.8h2.8l.3 1.8a8 8 0 0 1 1.7 1l1.7-.7 1.4 2.4-1.4 1.1a7 7 0 0 1 0 2Z"/>',
+  menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',
+  overview:'<rect x="3.5" y="3.5" width="7" height="7" rx="1.3"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.3"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.3"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.3"/>',
+  accounts:'<path d="M3 20h18M5 20V9l7-5 7 5v11M9 20v-6h6v6M8 10h.01M16 10h.01"/>',
+  cards:'<rect x="3" y="5" width="18" height="14" rx="2.2"/><path d="M3 9.5h18M7 14.5h4"/>',
+  crypto:'<circle cx="12" cy="12" r="9"/><path d="M9 8h4.2a2.3 2.3 0 0 1 0 4.6H9h4.5a2.4 2.4 0 0 1 0 4.8H9M11 6v12"/>',
+  activity:'<path d="M3 12h4l2.3-5.5L13 18l2.3-5H21"/>',
+  analytics:'<path d="M4 19.5h16M6.5 16V10m5.5 6V5m5.5 11v-8"/>',
+  settings:'<path d="M12 3.7 13.62 3.86 15.94 2.48 17.72 3.44 17.87 6.13 18.9 7.39 21.52 8.06 22.1 9.99 20.3 12 20.14 13.62 21.52 15.94 20.56 17.72 17.87 17.87 16.61 18.9 15.94 21.52 14.01 22.1 12 20.3 10.38 20.14 8.06 21.52 6.28 20.56 6.13 17.87 5.1 16.61 2.48 15.94 1.9 14.01 3.7 12 3.86 10.38 2.48 8.06 3.44 6.28 6.13 6.13 7.39 5.1 8.06 2.48 9.99 1.9Z"/><circle cx="12" cy="12" r="3.35"/>',
   send:'<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',
-  add:'<path d="M12 5v14M5 12h14"/>',
-  down:'<path d="m5 9 7 7 7-7"/>',
+  down:'<path d="M12 4v15m-6-6 6 6 6-6"/>',
   right:'<path d="m9 18 6-6-6-6"/>',
+  'chevron-down':'<path d="m6 9 6 6 6-6"/>',
   eye:'<path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"/><circle cx="12" cy="12" r="2.5"/>',
   'eye-off':'<path d="m3 3 18 18M10.6 10.6a2 2 0 0 0 2.8 2.8"/><path d="M9.9 5.2A11.5 11.5 0 0 1 12 5c6.5 0 10 7 10 7a16 16 0 0 1-3.2 3.8M6.2 6.2C3.5 8 2 12 2 12s3.5 7 10 7c1.3 0 2.5-.3 3.5-.8"/>',
   close:'<path d="m18 6-12 12M6 6l12 12"/>',
@@ -55,22 +56,31 @@ const glyphs = {
   plus:'<path d="M12 5v14M5 12h14"/>',
   logout:'<path d="M10 17l5-5-5-5M15 12H3"/><path d="M12 3h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7"/>',
   search:'<circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/>',
-  copy:'<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/>',
   freeze:'<path d="M12 2v20M4.9 6l14.2 12M4.9 18 19.1 6M3 12h18"/>'
 };
-const icon = (name, size=18) => { const px=size<=15?16:size<=18?18:size<=21?20:24; return '<svg width="'+px+'" height="'+px+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(glyphs[name]||'')+'</svg>'; };
-const money = n => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(Number(n)||0);
-const fmtDate = d => new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric',year:'numeric'}).format(new Date(d));
-const fmtTime = d => new Intl.DateTimeFormat('en-US',{hour:'numeric',minute:'2-digit'}).format(new Date(d));
+const icon = (name, size=18) => {
+  const px=Number.isFinite(Number(size))?Number(size):18;
+  return '<svg class="ui-icon ui-icon--'+safe(name)+'" width="'+px+'" height="'+px+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'+(glyphs[name]||'')+'</svg>';
+};
+function titanSelect(id,label,options,selected,extraClass=''){
+  const current=options.find(option=>option.value===selected)||options[0]||{value:'',label:'No options available'},listId=id+'-listbox',disabled=!options.some(option=>!option.disabled);
+  return '<div class="titan-select '+extraClass+'" data-dropdown-root><input type="hidden" id="'+safe(id)+'" value="'+safe(current.value)+'"><button type="button" class="dropdown-trigger" role="combobox" aria-label="'+safe(label)+'" aria-haspopup="listbox" aria-expanded="false" aria-controls="'+safe(listId)+'" '+(disabled?'disabled':'')+' data-dropdown-trigger><span class="dropdown-value">'+safe(current.label)+'</span>'+icon('chevron-down',16)+'</button><div class="dropdown-menu" id="'+safe(listId)+'" role="listbox" aria-label="'+safe(label)+'" hidden>'+options.map((option,index)=>'<button type="button" class="dropdown-option" id="'+safe(listId+'-'+index)+'" role="option" aria-selected="'+(option.value===current.value)+'" '+(option.disabled?'aria-disabled="true"':'')+' tabindex="-1" data-value="'+safe(option.value)+'" data-label="'+safe(option.label)+'" data-dropdown-option>'+safe(option.label)+'<span class="dropdown-selected" aria-hidden="true">'+icon('check',16)+'</span></button>').join('')+'</div></div>';
+}
 const safe = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clone = v => JSON.parse(JSON.stringify(v));
 
+let recoveryMessage='';
 function loadData(){
   try {
-    const raw = JSON.parse(localStorage.getItem(DATA_KEY));
-    if(raw && Array.isArray(raw.accounts) && Array.isArray(raw.transactions) && Array.isArray(raw.cards)) return raw;
-  } catch {}
-  return clone(seed);
+    const stored=localStorage.getItem(DATA_KEY);
+    if(stored===null)return clone(seed);
+    const result=normalizeData(JSON.parse(stored),seed);
+    if(result.recovered)recoveryMessage='Some saved sample data was damaged. Usable records were kept and missing items were restored.';
+    return result.data;
+  } catch {
+    recoveryMessage='Saved data could not be read. Titan is using the sample data for this session.';
+    return clone(seed);
+  }
 }
 function saveData(){ try{localStorage.setItem(DATA_KEY,JSON.stringify(state.data));}catch{toast('Browser storage is unavailable');} }
 function readSession(){
@@ -107,16 +117,16 @@ function toast(message){
     if(current)current.dataset.visible='false';
   },2400);
 }
-function totalCash(){return state.data.accounts.reduce((sum,a)=>sum+a.balance,0);}
-function totalIncome(){return state.data.transactions.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);}
-function totalSpend(){return state.data.transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);}
+function totalCash(){return calculateTotals(state.data.accounts,state.data.transactions).cash;}
+function totalIncome(){return calculateTotals(state.data.accounts,state.data.transactions).income;}
+function totalSpend(){return calculateTotals(state.data.accounts,state.data.transactions).spending;}
 function pageTitle(){return state.page;}
 function navItem(name, glyph){
-  return '<button class="nav-item '+(state.page===name?'active':'')+'" data-page="'+name+'" aria-label="'+name+'" title="'+name+'" '+(state.page===name?'aria-current="page"':'')+'>'+icon(glyph,18)+'<span>'+name+'</span></button>';
+  return '<button class="nav-item '+(state.page===name?'is-active':'')+'" data-page="'+name+'" aria-label="'+name+'" '+(state.page===name?'aria-current="page"':'')+'>'+icon(glyph,20)+'<span>'+name+'</span></button>';
 }
 function authView(){
   const register=state.authMode==='register';
-  return '<main class="auth-layout"><section class="auth-aside"><a class="brand" href="#" data-action="auth-home"><span class="brand-mark"><i></i></span><span>TITAN</span></a><div class="auth-message"><span class="eyebrow">A clearer view of your money</span><h1>One place.<br>More control.</h1><p>Banking and digital assets, brought into one considered workspace.</p></div><div class="auth-aside-foot">PRIVATE BY DESIGN <span>·</span> BUILT FOR CLARITY</div></section><section class="auth-main"><div class="auth-mobile-brand"><span class="brand-mark"><i></i></span><b>TITAN</b></div><div class="auth-card"><div class="auth-heading"><span class="eyebrow">'+(register?'GET STARTED':'WELCOME BACK')+'</span><h2>'+(register?'Create your account':'Sign in to Titan')+'</h2><p>'+(register?'Set up a local prototype profile.':'Continue to your financial workspace.')+'</p></div><form id="auth-form" novalidate>'+(register?'<label class="field-label" for="auth-name">Full name</label><input class="form-input" id="auth-name" name="name" autocomplete="name" placeholder="Alex Morgan" required>':'')+'<label class="field-label" for="auth-email">Email address</label><input class="form-input" id="auth-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required><label class="field-label" for="auth-password">Password</label><input class="form-input" id="auth-password" name="password" type="password" autocomplete="'+(register?'new-password':'current-password')+'" placeholder="Enter your password" required><div class="auth-error" role="alert">'+safe(state.authError)+'</div><button class="primary-button auth-submit" type="submit">'+(register?'Create local profile':'Sign in')+'</button></form><div class="auth-switch">'+(register?'Already have an account? <button data-action="auth-login">Sign in</button>':'New to Titan? <button data-action="auth-register">Create account</button>')+'</div><div class="demo-login"><div><span class="eyebrow">DEMO ACCESS</span><p>Use the sample profile to explore the interface.</p></div><button class="text-action" data-action="demo-login">Use demo account '+icon('right',14)+'</button><small>Email: demo@titan.app · Password: titan-demo</small></div></div><p class="auth-disclaimer">Prototype only. Authentication is simulated in this browser and does not secure real accounts or money.</p></section></main>';
+  return '<main class="auth-layout"><section class="auth-aside"><a class="brand" href="#" data-action="auth-home"><span class="brand-mark"><i></i></span><span>TITAN</span></a><div class="auth-message"><span class="eyebrow">A clearer view of your money</span><h1>One place.<br>More control.</h1><p>Banking and digital assets, brought into one considered workspace.</p></div><div class="auth-aside-foot">PRIVATE BY DESIGN <span>·</span> BUILT FOR CLARITY</div></section><section class="auth-main"><div class="auth-mobile-brand"><span class="brand-mark"><i></i></span><b>TITAN</b></div><div class="auth-card"><div class="auth-heading"><span class="eyebrow">'+(register?'GET STARTED':'WELCOME BACK')+'</span><h2>'+(register?'Create your account':'Sign in to Titan')+'</h2><p>'+(register?'Set up a local prototype profile.':'Continue to your financial workspace.')+'</p></div><form id="auth-form" novalidate>'+(register?'<label class="field-label" for="auth-name">Full name</label><input class="form-input" id="auth-name" name="name" autocomplete="name" placeholder="Alex Morgan" required>':'')+'<label class="field-label" for="auth-email">Email address</label><input class="form-input" id="auth-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required><label class="field-label" for="auth-password">Password</label><input class="form-input" id="auth-password" name="password" type="password" autocomplete="'+(register?'new-password':'current-password')+'" placeholder="Enter your password" required><div class="auth-error" role="alert">'+safe(state.authError)+'</div><button class="primary-button auth-submit" type="submit">'+(register?'Create local profile':'Sign in')+'</button></form><div class="auth-switch">'+(register?'Already have an account? <button data-action="auth-login">Sign in</button>':'New to Titan? <button data-action="auth-register">Create account</button>')+'</div><div class="demo-login"><div><span class="eyebrow">DEMO ACCESS</span><p>Use the sample profile to explore the interface.</p></div><button class="text-action" data-action="demo-login">Use demo account '+icon('right',16)+'</button><small>Email: demo@titan.app · Password: titan-demo</small></div></div><p class="auth-disclaimer">Prototype only. Authentication is simulated in this browser and does not secure real accounts or money.</p></section></main>';
 }
 function shell(content){
   const initials=(state.data.profile.initials||'AM').slice(0,2);
@@ -126,64 +136,57 @@ function heading(kicker,title,desc,action=''){
   return '<div class="page-heading"><div><span class="eyebrow">'+kicker+'</span><h1>'+title+'</h1><p>'+desc+'</p></div>'+action+'</div>';
 }
 function balanceCard(){
-  return '<section class="hero-balance"><div class="hero-top"><span class="eyebrow">TOTAL ACCOUNT BALANCE</span><button class="visibility-control" data-action="toggle-balance" aria-label="'+(state.hidden?'Show balances':'Hide balances')+'" aria-pressed="'+state.hidden+'">'+icon(state.hidden?'eye-off':'eye',18)+'</button></div><div class="hero-amount">'+(state.hidden?'••••••••':money(totalCash()))+'</div><div class="hero-bottom"><span>Across '+state.data.accounts.length+' accounts</span><span class="hero-currency">USD <span>·</span> Sample balance</span></div><div class="hero-actions"><button class="primary-button" data-action="transfer">'+icon('send',16)+'Transfer</button><button class="secondary-button" data-action="add-funds">'+icon('plus',17)+'Add funds</button><button class="secondary-button" data-page="Accounts">View accounts '+icon('right',14)+'</button></div></section>';
+  return '<section class="hero-balance"><div class="hero-top"><span class="eyebrow">TOTAL ACCOUNT BALANCE</span><button class="visibility-control" data-action="toggle-balance" aria-label="'+(state.hidden?'Show balances':'Hide balances')+'" aria-pressed="'+state.hidden+'">'+icon(state.hidden?'eye-off':'eye',18)+'</button></div><div class="hero-amount">'+(state.hidden?'••••••••':money(totalCash()))+'</div><div class="hero-bottom"><span>Across '+state.data.accounts.length+' accounts</span><span class="hero-currency">USD <span>·</span> Sample balance</span></div><div class="hero-actions"><button class="primary-button" data-action="transfer">'+icon('send',16)+'Transfer</button><button class="secondary-button" data-action="add-funds">'+icon('plus',16)+'Add funds</button><button class="secondary-button" data-page="Accounts">View accounts '+icon('right',16)+'</button></div></section>';
 }
 function transactionRow(t){
   const incoming=t.type==='income';
-  return '<button class="transaction-row" data-transaction="'+safe(t.id)+'"><span class="transaction-glyph '+(incoming?'income':'expense')+'">'+icon(incoming?'down':'send',16)+'</span><span class="transaction-description"><strong>'+safe(t.name)+'</strong><small>'+safe(t.detail)+' · '+safe(t.category)+'</small></span><span class="transaction-date">'+fmtDate(t.date)+'</span><strong class="transaction-amount '+(incoming?'income':'')+'">'+(incoming?'+':'−')+money(t.amount)+'</strong>'+icon('right',14)+'</button>';
+  return '<button class="transaction-row" data-transaction="'+safe(t.id)+'"><span class="transaction-glyph '+(incoming?'income':'expense')+'">'+icon(incoming?'down':'send',16)+'</span><span class="transaction-description"><strong>'+safe(t.name)+'</strong><small>'+safe(t.detail)+' · '+safe(t.category)+'</small></span><span class="transaction-date">'+fmtDate(t.date)+'</span><strong class="transaction-amount '+(incoming?'income':'')+'">'+(incoming?'+':'−')+money(t.amount)+'</strong>'+icon('right',16)+'</button>';
 }
 function recentList(limit=5){
   const items=state.data.transactions.slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,limit);
   return '<div class="transaction-list">'+(items.length?items.map(transactionRow).join(''):'<div class="empty-state">No activity yet.</div>')+'</div>';
 }
 function accountCard(a){
-  return '<button class="account-card" data-account="'+a.id+'"><div class="account-card-top"><span class="account-symbol '+a.color+'">'+(a.type==='Checking'?'C':a.type==='Savings'?'S':'R')+'</span>'+icon('right',15)+'</div><span class="account-type">'+a.type.toUpperCase()+'</span><strong class="account-balance">'+(state.hidden?'••••••':money(a.balance))+'</strong><span class="account-name">'+safe(a.name)+'</span><span class="account-number">'+a.number+'</span></button>';
+  return '<button class="account-card" data-account="'+a.id+'"><div class="account-card-top"><span class="account-symbol '+a.color+'">'+(a.type==='Checking'?'C':a.type==='Savings'?'S':'R')+'</span>'+icon('right',16)+'</div><span class="account-type">'+a.type.toUpperCase()+'</span><strong class="account-balance">'+(state.hidden?'••••••':money(a.balance))+'</strong><span class="account-name">'+safe(a.name)+'</span><span class="account-number">'+a.number+'</span></button>';
 }
 function assetRow(a){
-  const symbol=a.id==='btc'?'₿':a.id==='eth'?'◆':'◎';
-  return '<button class="asset-row" data-asset="'+a.id+'"><span class="asset-mark '+a.color+'">'+symbol+'</span><span class="asset-copy"><strong>'+a.name+'</strong><small>'+a.symbol+' · '+a.network+'</small></span><span class="asset-quantity"><strong>'+a.quantity+'</strong><small>'+a.symbol+'</small></span>'+icon('right',14)+'</button>';
+  const mark=a.id==='eth'?'<svg viewBox="0 0 24 32" aria-hidden="true"><path d="m12 1 9 15-9 5-9-5 9-15Z" fill="currentColor" opacity=".82"/><path d="m12 32 9-13-9 5-9-5 9 13Z" fill="currentColor" opacity=".52"/></svg>':a.id==='sol'?'<svg viewBox="0 0 28 24" aria-hidden="true"><path d="M5 2h20l-4 4H1l4-4Zm2 8h20l-4 4H3l4-4Zm-2 8h20l-4 4H1l4-4Z" fill="currentColor"/></svg>':'₿';
+  return '<button class="asset-row" data-asset="'+a.id+'"><span class="asset-mark '+a.color+'">'+mark+'</span><span class="asset-copy"><strong>'+a.name+'</strong><small>'+a.symbol+' · '+a.network+'</small></span><span class="asset-quantity"><strong>'+a.quantity+'</strong><small>'+a.symbol+'</small></span>'+icon('right',16)+'</button>';
 }
 function overviewPage(){
   const accounts=state.data.accounts.slice(0,3);
   const income=totalIncome(), spend=totalSpend();
   return heading('YOUR FINANCIAL SPACE','Overview','Your accounts, cards and digital assets at a glance.')+balanceCard()+
-    '<div class="overview-columns"><section class="page-section"><div class="section-title"><div><span class="eyebrow">BANKING</span><h2>Your accounts</h2></div><button class="text-action" data-page="Accounts">All accounts '+icon('right',14)+'</button></div><div class="account-grid">'+accounts.map(accountCard).join('')+'</div></section><section class="page-section"><div class="section-title"><div><span class="eyebrow">ACTIVITY</span><h2>Recent transactions</h2></div><button class="text-action" data-page="Activity">View all '+icon('right',14)+'</button></div>'+recentList(4)+'</section></div>'+
-    '<div class="overview-columns secondary-columns"><section class="page-section"><div class="section-title"><div><span class="eyebrow">DIGITAL ASSETS</span><h2>Crypto wallet</h2></div><button class="text-action" data-page="Crypto">View wallet '+icon('right',14)+'</button></div><div class="asset-list">'+state.data.assets.map(assetRow).join('')+'</div><p class="section-footnote">Illustrative quantities only. No live prices or connected wallet.</p></section><section class="page-section"><div class="section-title"><div><span class="eyebrow">CASH FLOW</span><h2>Activity summary</h2></div><button class="text-action" data-page="Analytics">Analytics '+icon('right',14)+'</button></div><div class="summary-stats"><div><span>Recorded income</span><strong class="positive">'+money(income)+'</strong></div><div><span>Recorded spending</span><strong>'+money(spend)+'</strong></div><div><span>Net recorded</span><strong class="'+(income-spend>=0?'positive':'negative')+'">'+money(income-spend)+'</strong></div></div></section></div>';
+    '<div class="overview-columns"><section class="page-section"><div class="section-title"><div><span class="eyebrow">BANKING</span><h2>Your accounts</h2></div><button class="text-action" data-page="Accounts">All accounts '+icon('right',16)+'</button></div><div class="account-grid">'+accounts.map(accountCard).join('')+'</div></section><section class="page-section"><div class="section-title"><div><span class="eyebrow">ACTIVITY</span><h2>Recent transactions</h2></div><button class="text-action" data-page="Activity">View all '+icon('right',16)+'</button></div>'+recentList(4)+'</section></div>'+
+    '<div class="overview-columns secondary-columns"><section class="page-section"><div class="section-title"><div><span class="eyebrow">DIGITAL ASSETS</span><h2>Crypto wallet</h2></div><button class="text-action" data-page="Crypto">View wallet '+icon('right',16)+'</button></div><div class="asset-list">'+state.data.assets.map(assetRow).join('')+'</div><p class="section-footnote">Illustrative quantities only. No live prices or connected wallet.</p></section><section class="page-section"><div class="section-title"><div><span class="eyebrow">CASH FLOW</span><h2>Activity summary</h2></div><button class="text-action" data-page="Analytics">Analytics '+icon('right',16)+'</button></div><div class="summary-stats"><div><span>Recorded income</span><strong class="positive">'+money(income)+'</strong></div><div><span>Recorded spending</span><strong>'+money(spend)+'</strong></div><div><span>Net recorded</span><strong class="'+(income-spend>=0?'positive':'negative')+'">'+money(income-spend)+'</strong></div></div></section></div>';
 }
 function accountsPage(){
   return heading('BANKING','Accounts','Manage your sample cash accounts and account activity.', '<button class="primary-button" data-action="add-funds">'+icon('plus',16)+'Add funds</button>')+
     '<div class="account-grid account-grid-page">'+state.data.accounts.map(accountCard).join('')+'</div>'+
     '<section class="page-section account-ledger"><div class="section-title"><div><span class="eyebrow">ACCOUNT ACTIVITY</span><h2>Recent account movements</h2></div></div>'+recentList(8)+'</section>'+
-    '<p class="inline-disclaimer">'+icon('lock',15)+' Account balances and movements are local sample data. No bank is connected.</p>';
+    '<p class="inline-disclaimer">'+icon('lock',16)+' Account balances and movements are local sample data. No bank is connected.</p>';
 }
 function cardVisual(c){
-  return '<article class="payment-card '+(c.frozen?'frozen':'')+'"><div class="payment-card-head"><span class="brand-mini">TITAN</span><span class="card-kind">'+c.kind.toUpperCase()+'</span></div><div class="card-chip"><span></span></div><div class="card-number">•••• &nbsp;•••• &nbsp;•••• &nbsp;'+c.last4+'</div><div class="payment-card-foot"><div><small>CARDHOLDER</small><strong>'+safe(c.holder)+'</strong></div><div class="card-network">◉◉</div></div><span class="card-watermark"></span></article>';
+  return '<article class="payment-card '+(c.frozen?'frozen':'')+'"><div class="payment-card-head"><span class="brand-mini">TITAN</span><span class="card-kind">'+c.kind.toUpperCase()+'</span></div><div class="card-chip"><span></span></div><div class="card-number">•••• &nbsp;•••• &nbsp;•••• &nbsp;'+c.last4+'</div><div class="payment-card-foot"><div><small>CARDHOLDER</small><strong>'+safe(c.holder)+'</strong></div><div class="card-mark" aria-hidden="true">T</div></div><span class="card-watermark"></span></article>';
 }
 function cardsPage(){
   return heading('PAYMENTS','Cards','View and manage your sample Titan payment cards.', '<button class="secondary-button" data-action="new-card">'+icon('plus',16)+'New virtual card</button>')+
-    '<div class="cards-grid">'+state.data.cards.map(c=>'<section class="card-management">'+cardVisual(c)+'<div class="card-info"><div><strong>'+safe(c.name)+'</strong><span>'+c.status+' · '+c.kind+'</span></div><button class="text-action" data-card="'+c.id+'">Manage '+icon('right',14)+'</button></div><div class="card-usage"><div><span>Illustrative monthly usage</span><strong>'+money(c.spent)+' / '+money(c.limit)+'</strong></div><div class="usage-track"><i style="width:'+Math.min(100,c.spent/c.limit*100)+'%"></i></div></div></section>').join('')+'</div>'+
-    '<p class="inline-disclaimer">'+icon('lock',15)+' These are visual prototypes, not issued or usable payment cards. Card controls only change local sample state.</p>';
+    '<div class="cards-grid">'+state.data.cards.map(c=>'<section class="card-management">'+cardVisual(c)+'<div class="card-info"><div><strong>'+safe(c.name)+'</strong><span>'+c.status+' · '+c.kind+'</span></div><button class="text-action" data-card="'+c.id+'">Manage '+icon('right',16)+'</button></div><div class="card-usage"><div><span>Illustrative monthly usage</span><strong>'+money(c.spent)+' / '+money(c.limit)+'</strong></div><div class="usage-track"><i style="width:'+Math.min(100,c.spent/c.limit*100)+'%"></i></div></div></section>').join('')+'</div>'+
+    '<p class="inline-disclaimer">'+icon('lock',16)+' These are visual prototypes, not issued or usable payment cards. Card controls only change local sample state.</p>';
 }
 function cryptoPage(){
   return heading('DIGITAL ASSETS','Crypto wallet','A view of your sample digital asset holdings.')+
     '<section class="crypto-summary"><div><span class="eyebrow">ASSETS HELD</span><strong>'+state.data.assets.length+'</strong><small>Sample assets</small></div><div><span class="eyebrow">WALLET STATUS</span><strong>Not connected</strong><small>No network access</small></div><div><span class="eyebrow">MARKET DATA</span><strong>Unavailable</strong><small>No live prices displayed</small></div></section>'+
     '<section class="page-section crypto-holdings"><div class="section-title"><div><span class="eyebrow">YOUR HOLDINGS</span><h2>Assets</h2></div></div><div class="asset-list">'+state.data.assets.map(assetRow).join('')+'</div></section>'+
-    '<div class="inline-disclaimer">'+icon('lock',15)+' Quantities are illustrative. Titan does not connect to a wallet, exchange or blockchain, and cannot send, receive or trade digital assets.</div>';
+    '<div class="inline-disclaimer">'+icon('lock',16)+' Quantities are illustrative. Titan does not connect to a wallet, exchange or blockchain, and cannot send, receive or trade digital assets.</div>';
 }
 function filteredTransactions(){
-  let items=state.data.transactions.slice();
-  if(state.filter!=='all') items=items.filter(t=>t.type===state.filter);
-  if(state.search.trim()){
-    const q=state.search.toLowerCase();
-    items=items.filter(t=>(t.name+' '+t.detail+' '+t.category+' '+t.method+' '+t.account).toLowerCase().includes(q));
-  }
-  items.sort((a,b)=>state.sort==='oldest'?new Date(a.date)-new Date(b.date):new Date(b.date)-new Date(a.date));
-  return items;
+  return filterAndSortTransactions(state.data.transactions,{filter:state.filter,search:state.search,sort:state.sort});
 }
 function activityPage(){
   const items=filteredTransactions();
   return heading('HISTORY','Activity','Search and review your account transactions.')+
-    '<section class="page-section activity-section"><div class="activity-toolbar"><div class="filter-group">'+[['all','All'],['income','Incoming'],['expense','Outgoing']].map(([v,l])=>'<button class="'+(state.filter===v?'selected':'')+'" data-filter="'+v+'">'+l+'</button>').join('')+'</div><label class="search-box">'+icon('search',16)+'<input id="activity-search" type="search" placeholder="Search transactions" value="'+safe(state.search)+'"></label><select id="activity-sort" aria-label="Sort transactions"><option value="newest" '+(state.sort==='newest'?'selected':'')+'>Newest first</option><option value="oldest" '+(state.sort==='oldest'?'selected':'')+'>Oldest first</option></select></div><div class="transaction-list full-list">'+(items.length?items.map(transactionRow).join(''):'<div class="empty-state">No matching transactions.</div>')+'</div><div class="list-footer">Showing '+items.length+' of '+state.data.transactions.length+' transactions</div></section>';
+    '<section class="page-section activity-section"><div class="activity-toolbar"><div class="filter-group" role="group" aria-label="Filter transactions">'+[['all','All'],['income','Incoming'],['expense','Outgoing']].map(([v,l])=>'<button type="button" class="'+(state.filter===v?'selected':'')+'" aria-pressed="'+(state.filter===v)+'" data-filter="'+v+'">'+l+'</button>').join('')+'</div><label class="search-box">'+icon('search',16)+'<input id="activity-search" type="search" aria-label="Search transactions" placeholder="Search transactions" value="'+safe(state.search)+'"></label>'+titanSelect('activity-sort','Sort transactions',[{value:'newest',label:'Newest first'},{value:'oldest',label:'Oldest first'}],state.sort,'activity-sort-select')+'</div><div class="transaction-list full-list">'+(items.length?items.map(transactionRow).join(''):'<div class="empty-state">No matching transactions.</div>')+'</div><div class="list-footer">Showing '+items.length+' of '+state.data.transactions.length+' transactions</div></section>';
 }
 function analyticsPage(){
   const income=totalIncome(), spend=totalSpend(), max=Math.max(income,spend,1);
@@ -193,36 +196,54 @@ function analyticsPage(){
   return heading('INSIGHTS','Analytics','A simple breakdown of the sample activity in this browser.')+
     '<div class="analytics-stats"><div class="metric-card"><span>Recorded income</span><strong class="positive">'+money(income)+'</strong><small>'+state.data.transactions.filter(t=>t.type==='income').length+' entries</small></div><div class="metric-card"><span>Recorded spending</span><strong>'+money(spend)+'</strong><small>'+state.data.transactions.filter(t=>t.type==='expense').length+' entries</small></div><div class="metric-card"><span>Net recorded</span><strong class="'+(income-spend>=0?'positive':'negative')+'">'+money(income-spend)+'</strong><small>Income minus spending</small></div></div>'+
     '<div class="analytics-grid"><section class="page-section"><div class="section-title"><div><span class="eyebrow">CASH FLOW</span><h2>Recorded totals</h2></div></div><div class="bar-comparison"><div><span>Income</span><div class="bar-track"><i class="income-bar" style="width:'+(income/max*100)+'%"></i></div><strong>'+money(income)+'</strong></div><div><span>Spending</span><div class="bar-track"><i class="spend-bar" style="width:'+(spend/max*100)+'%"></i></div><strong>'+money(spend)+'</strong></div></div></section><section class="page-section"><div class="section-title"><div><span class="eyebrow">SPENDING</span><h2>By category</h2></div></div><div class="category-list">'+(rows.length?rows.map(([name,value])=>'<div class="category-row"><span>'+safe(name)+'</span><div class="category-track"><i style="width:'+(value/Math.max(spend,1)*100)+'%"></i></div><strong>'+money(value)+'</strong></div>').join(''):'<p class="section-footnote">No spending recorded yet.</p>')+'</div></section></div>'+
-    '<p class="inline-disclaimer">'+icon('lock',15)+' Calculated from local sample transactions only. No financial advice or live account data.</p>';
+    '<p class="inline-disclaimer">'+icon('lock',16)+' Calculated from local sample transactions only. No financial advice or live account data.</p>';
 }
 function settingsPage(){
   const p=state.data.profile;
   return heading('PREFERENCES','Settings','Manage your local Titan profile and prototype data.')+
     '<div class="settings-layout"><section class="page-section settings-section"><div class="section-title"><div><span class="eyebrow">PROFILE</span><h2>Personal information</h2></div></div><form id="profile-form" class="settings-form"><label class="field-label" for="profile-name">Display name</label><input class="form-input" id="profile-name" value="'+safe(p.name)+'" required><label class="field-label" for="profile-email">Email address</label><input class="form-input" id="profile-email" type="email" value="'+safe(p.email)+'" required><button class="primary-button" type="submit">Save profile</button></form></section><section class="page-section settings-section"><div class="section-title"><div><span class="eyebrow">SESSION</span><h2>Sign-in details</h2></div></div><div class="settings-line"><span>Authentication</span><strong>Simulated local session</strong></div><div class="settings-line"><span>Session email</span><strong>'+safe(state.session.email)+'</strong></div><button class="secondary-button settings-logout" data-action="logout">'+icon('logout',16)+'Sign out</button></section><section class="page-section settings-section"><div class="section-title"><div><span class="eyebrow">LOCAL DATA</span><h2>Prototype storage</h2></div></div><div class="settings-line"><span>Saved in</span><strong>This browser</strong></div><div class="settings-line"><span>External connections</span><strong>None</strong></div><button class="danger-button" data-action="reset-data">Reset sample data</button></section></div>'+
-    '<p class="inline-disclaimer">'+icon('lock',15)+' This is a front-end prototype. Do not enter real passwords or sensitive financial information. Local sign-in is not secure authentication.</p>';
+    '<p class="inline-disclaimer">'+icon('lock',16)+' This is a front-end prototype. Do not enter real passwords or sensitive financial information. Local sign-in is not secure authentication.</p>';
 }
 function modalView(){
   const m=state.modal;
   let title='', body='', context='DETAILS';
   if(m==='transfer'||m==='add-funds'){
     const sending=m==='transfer'; title=sending?'Transfer funds':'Add sample funds'; context=sending?'BANKING':'BALANCE';
-    body='<p class="modal-description">'+(sending?'Move sample funds between your Titan accounts.':'Increase the local sample balance for interface testing.')+'</p>'+(sending?'<label class="field-label" for="transfer-from">From account</label><select class="form-input" id="transfer-from">'+state.data.accounts.map(a=>'<option value="'+a.id+'">'+safe(a.name)+' · '+money(a.balance)+'</option>').join('')+'</select><label class="field-label" for="transfer-to">To account</label><select class="form-input" id="transfer-to">'+state.data.accounts.map((a,i)=>'<option value="'+a.id+'" '+(i===1?'selected':'')+'>'+safe(a.name)+'</option>').join('')+'</select>':'<label class="field-label" for="fund-account">Add to account</label><select class="form-input" id="fund-account">'+state.data.accounts.map(a=>'<option value="'+a.id+'">'+safe(a.name)+'</option>').join('')+'</select>')+'<label class="field-label" for="modal-amount">Amount (USD)</label><div class="amount-input"><span>$</span><input id="modal-amount" type="number" min="0.01" max="1000000" step="0.01" placeholder="0.00" inputmode="decimal"></div><p class="modal-notice">'+icon('lock',15)+' Prototype only. No money will be moved or deposited.</p><button class="primary-button modal-submit" data-action="confirm-'+(sending?'transfer':'funds')+'">'+(sending?'Review transfer':'Add sample funds')+'</button>';
+    body='<p class="modal-description">'+(sending?'Move sample funds between your Titan accounts.':'Increase the local sample balance for interface testing.')+'</p>'+(sending?'<label class="field-label">From account</label>'+titanSelect('transfer-from','From account',state.data.accounts.map(a=>({value:a.id,label:a.name+' · '+money(a.balance)})),state.data.accounts[0]?.id,'modal-select')+'<label class="field-label">To account</label>'+titanSelect('transfer-to','To account',state.data.accounts.map(a=>({value:a.id,label:a.name})),state.data.accounts[1]?.id||state.data.accounts[0]?.id,'modal-select'):'<label class="field-label">Add to account</label>'+titanSelect('fund-account','Add to account',state.data.accounts.map(a=>({value:a.id,label:a.name})),state.data.accounts[0]?.id,'modal-select'))+'<label class="field-label" for="modal-amount">Amount (USD)</label><div class="amount-input"><span>$</span><input id="modal-amount" type="number" min="0.01" max="1000000" step="0.01" placeholder="0.00" inputmode="decimal"></div><p class="modal-notice">'+icon('lock',16)+' Prototype only. No money will be moved or deposited.</p><button class="primary-button modal-submit" data-action="confirm-'+(sending?'transfer':'funds')+'">'+(sending?'Review transfer':'Add sample funds')+'</button>';
   }else if(m==='account'){
     const a=state.data.accounts.find(x=>x.id===state.selected); title=a?a.name:'Account details';
     body=a?'<div class="detail-balance">'+money(a.balance)+'</div><div class="settings-line"><span>Account type</span><strong>'+a.type+'</strong></div><div class="settings-line"><span>Account number</span><strong>'+a.number+'</strong></div><div class="settings-line"><span>Currency</span><strong>'+a.currency+'</strong></div><button class="primary-button modal-submit" data-action="transfer">Transfer between accounts</button>':'';
   }else if(m==='asset'){
     const a=state.data.assets.find(x=>x.id===state.selected); title=a?a.name:'Asset details';
-    body=a?'<div class="detail-balance">'+a.quantity+' '+a.symbol+'</div><div class="settings-line"><span>Network</span><strong>'+a.network+'</strong></div><div class="settings-line"><span>Wallet connection</span><strong>Not connected</strong></div><p class="modal-notice">'+icon('lock',15)+' Illustrative holding only. No transactions can be made.</p>':'';
+    body=a?'<div class="detail-balance">'+a.quantity+' '+a.symbol+'</div><div class="settings-line"><span>Network</span><strong>'+a.network+'</strong></div><div class="settings-line"><span>Wallet connection</span><strong>Not connected</strong></div><p class="modal-notice">'+icon('lock',16)+' Illustrative holding only. No transactions can be made.</p>':'';
   }else if(m==='transaction'){
     const t=state.data.transactions.find(x=>x.id===state.selected); title='Transaction details';
-    body=t?'<div class="detail-balance '+(t.type==='income'?'positive':'')+'">'+(t.type==='income'?'+':'−')+money(t.amount)+'</div><div class="settings-line"><span>Description</span><strong>'+safe(t.name)+'</strong></div><div class="settings-line"><span>Category</span><strong>'+safe(t.category)+'</strong></div><div class="settings-line"><span>Date</span><strong>'+fmtDate(t.date)+' · '+fmtTime(t.date)+'</strong></div><div class="settings-line"><span>Account</span><strong>'+safe(t.account)+'</strong></div><div class="settings-line"><span>Method</span><strong>'+safe(t.method)+'</strong></div><p class="modal-notice">'+icon('lock',15)+' Sample record only.</p>':'';
+    body=t?'<div class="detail-balance '+(t.type==='income'?'positive':'')+'">'+(t.type==='income'?'+':'−')+money(t.amount)+'</div><div class="settings-line"><span>Description</span><strong>'+safe(t.name)+'</strong></div><div class="settings-line"><span>Category</span><strong>'+safe(t.category)+'</strong></div><div class="settings-line"><span>Date</span><strong>'+fmtDate(t.date)+' · '+fmtTime(t.date)+'</strong></div><div class="settings-line"><span>Account</span><strong>'+safe(t.account)+'</strong></div><div class="settings-line"><span>Method</span><strong>'+safe(t.method)+'</strong></div><p class="modal-notice">'+icon('lock',16)+' Sample record only.</p>':'';
   }else if(m==='card'){
     const c=state.data.cards.find(x=>x.id===state.selected); title=c?c.name:'Card settings';
-    body=c?'<div class="settings-line"><span>Card number</span><strong>•••• '+c.last4+'</strong></div><div class="settings-line"><span>Type</span><strong>'+c.kind+'</strong></div><div class="settings-line"><span>Status</span><strong>'+(c.frozen?'Frozen':'Active')+'</strong></div><button class="secondary-button modal-submit" data-action="toggle-card">'+icon('freeze',16)+(c.frozen?'Unfreeze card':'Freeze card')+'</button><p class="modal-notice">'+icon('lock',15)+' Visual prototype only. This card cannot be used for payments.</p>':'';
+    body=c?'<div class="settings-line"><span>Card number</span><strong>•••• '+c.last4+'</strong></div><div class="settings-line"><span>Type</span><strong>'+c.kind+'</strong></div><div class="settings-line"><span>Status</span><strong>'+(c.frozen?'Frozen':'Active')+'</strong></div><button class="secondary-button modal-submit" data-action="toggle-card">'+icon('freeze',16)+(c.frozen?'Unfreeze card':'Freeze card')+'</button><p class="modal-notice">'+icon('lock',16)+' Visual prototype only. This card cannot be used for payments.</p>':'';
   }
-  return '<div class="modal-backdrop" data-action="backdrop"><section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="sheet-grabber"></div><div class="modal-topline"><span class="eyebrow">'+context+'</span><button class="modal-close" data-action="close-modal" aria-label="Close">'+icon('close',17)+'</button></div><h2 id="modal-title">'+title+'</h2>'+body+'</section></div>';
+  const kind=modalVariant(m);
+  return '<div class="modal-backdrop" data-modal-kind="'+kind+'" data-action="backdrop"><section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modal-title" tabindex="-1"><div class="sheet-grabber"></div><div class="modal-topline"><span class="eyebrow">'+context+'</span><button class="modal-close" data-action="close-modal" aria-label="Close">'+icon('close',18)+'</button></div><h2 id="modal-title">'+title+'</h2>'+body+'</section></div>';
 }
-function openModal(name,id=null){state.modal=name;state.selected=id;render();const f=document.querySelector('#modal-amount');if(f)f.focus();}
+let modalReturnFocus=null;
+let modalReturnSelector='';
+function openModal(name,id=null){
+  modalReturnFocus=document.activeElement;
+  const opener=modalReturnFocus;
+  const key=['account','asset','transaction','card'].find(k=>opener?.dataset?.[k]);
+  modalReturnSelector=key?'['+`data-${key}`+'="'+CSS.escape(opener.dataset[key])+'"]':opener?.dataset?.action?'[data-action="'+CSS.escape(opener.dataset.action)+'"]':'';
+  state.modal=name;state.selected=id;render();
+  const panel=document.querySelector('.modal-panel');
+  const focusTarget=document.querySelector('#modal-amount')||panel?.querySelector('button,select,input');
+  focusTarget?.focus({preventScroll:true});
+}
+function closeModal(){
+  state.modal=null;render();
+  const restored=modalReturnFocus?.isConnected?modalReturnFocus:(modalReturnSelector?document.querySelector(modalReturnSelector):null);
+  restored?.focus({preventScroll:true});
+  modalReturnFocus=null;modalReturnSelector='';
+}
 function signIn(email,name='Alex Morgan'){
   const clean=email.trim().toLowerCase();
   state.session={email:clean,name};
@@ -255,6 +276,69 @@ function doTransfer(fund){
     state.data.transactions.unshift({id:'t'+Date.now(),name:'Internal transfer',detail:from.name+' to '+to.name,date:new Date().toISOString(),amount,type:'expense',category:'Transfer',account:from.name,method:'Internal transfer'});
   }
   saveData();state.modal=null;render();toast(fund?'Sample funds added':'Sample transfer recorded');
+}
+function setDropdownActive(menu,index){
+  const options=[...menu.querySelectorAll('[data-dropdown-option]:not([aria-disabled="true"])')];
+  if(!options.length)return;
+  const option=options[Math.max(0,Math.min(index,options.length-1))];
+  option.focus({preventScroll:true});
+  if(option.offsetTop<menu.scrollTop)menu.scrollTop=option.offsetTop;
+  else if(option.offsetTop+option.offsetHeight>menu.scrollTop+menu.clientHeight)menu.scrollTop=option.offsetTop+option.offsetHeight-menu.clientHeight;
+}
+function positionDropdown(trigger,menu){
+  if(!trigger||!menu||menu.hidden)return;
+  const rect=trigger.getBoundingClientRect(),pad=8,viewportHeight=window.innerHeight;
+  const maxHeight=Math.max(40,Math.min(248,viewportHeight-pad*2)),width=Math.min(Math.max(rect.width,176),Math.max(1,window.innerWidth-pad*2));
+  const left=Math.max(pad,Math.min(rect.left,window.innerWidth-width-pad));
+  const roomBelow=Math.max(0,viewportHeight-rect.bottom-pad),roomAbove=Math.max(0,rect.top-pad);
+  const above=roomBelow<Math.min(190,menu.scrollHeight)&&roomAbove>roomBelow;
+  const room=above?roomAbove:roomBelow,height=Math.max(40,Math.min(maxHeight,room));
+  menu.style.maxHeight=height+'px';menu.dataset.placement=above?'top':'bottom';
+  menu.style.left=left+'px';menu.style.width=width+'px';
+  menu.style.top=above?Math.max(pad,rect.top-height-6)+'px':Math.max(pad,Math.min(rect.bottom+6,viewportHeight-height-pad))+'px';
+}
+function closeDropdown(root,restoreFocus=false){
+  if(!root)return;
+  const trigger=root.querySelector('[data-dropdown-trigger]'),menu=root.querySelector('[role="listbox"]');
+  root.dataset.open='false';
+  if(trigger){trigger.setAttribute('aria-expanded','false');trigger.removeAttribute('aria-activedescendant');}
+  if(menu){menu.hidden=true;menu.style.removeProperty('top');menu.style.removeProperty('left');menu.style.removeProperty('width');menu.style.removeProperty('max-height');}
+  if(restoreFocus)trigger?.focus({preventScroll:true});
+}
+function closeDropdowns(except=null){document.querySelectorAll('[data-dropdown-root][data-open="true"]').forEach(root=>{if(root!==except)closeDropdown(root);});}
+function openDropdown(trigger,focusIndex=null){
+  const root=trigger.closest('[data-dropdown-root]'),menu=root?.querySelector('[role="listbox"]');
+  if(!root||!menu||trigger.disabled)return;
+  closeDropdowns(root);
+  menu.hidden=false;root.dataset.open='true';trigger.setAttribute('aria-expanded','true');
+  positionDropdown(trigger,menu);
+  const options=[...menu.querySelectorAll('[data-dropdown-option]:not([aria-disabled="true"])')];
+  const selected=options.findIndex(option=>option.getAttribute('aria-selected')==='true');
+  setDropdownActive(menu,focusIndex===null?Math.max(0,selected):focusIndex);
+}
+function refreshActivityRows(){
+  const items=filteredTransactions(),list=document.querySelector('.full-list');
+  if(list)list.innerHTML=items.length?items.map(transactionRow).join(''):'<div class="empty-state">No matching transactions.</div>';
+  const footer=document.querySelector('.list-footer');
+  if(footer)footer.textContent='Showing '+items.length+' of '+state.data.transactions.length+' transactions';
+}
+function setActivityFilter(filter){
+  state.filter=filter;
+  document.querySelectorAll('.filter-group [data-filter]').forEach(button=>{
+    const selected=button.dataset.filter===filter;
+    button.classList.toggle('selected',selected);button.setAttribute('aria-pressed',String(selected));
+  });
+  refreshActivityRows();
+}
+function chooseDropdown(option){
+  if(!option||option.getAttribute('aria-disabled')==='true')return;
+  const root=option.closest('[data-dropdown-root]'),trigger=root?.querySelector('[data-dropdown-trigger]'),input=root?.querySelector('input[type="hidden"]'),menu=root?.querySelector('[role="listbox"]');
+  if(!root||!trigger||!input||!menu)return;
+  input.value=option.dataset.value;
+  trigger.querySelector('.dropdown-value').textContent=option.dataset.label;
+  menu.querySelectorAll('[data-dropdown-option]').forEach(item=>item.setAttribute('aria-selected',String(item===option)));
+  if(input.id==='activity-sort'){state.sort=input.value;refreshActivityRows();}
+  closeDropdown(root,true);
 }
 function updateBalanceVisibility(){
   const hidden=state.hidden;
@@ -301,7 +385,7 @@ function setNavigation(open){
   }
 }
 function handleAction(a){
-  if(a==='close-modal'){state.modal=null;render();return;}
+  if(a==='close-modal'){closeModal();return;}
   if(a==='toggle-balance'){state.hidden=!state.hidden;updateBalanceVisibility();return;}
   if(a==='transfer'||a==='add-funds'){openModal(a);return;}
   if(a==='confirm-transfer'||a==='confirm-funds'){doTransfer(a==='confirm-funds');return;}
@@ -334,22 +418,39 @@ function render(animatePage=false){
   }[state.page]||overviewPage)()):authView();
   document.body.classList.toggle('has-modal',Boolean(state.modal));
   document.body.classList.toggle('has-nav-open',Boolean(state.navOpen && window.matchMedia('(max-width:760px)').matches));
+  const isMobile=window.matchMedia('(max-width:760px)').matches;
+  document.querySelectorAll('.main-area,.sidebar').forEach(region=>{
+    const hidden=Boolean(state.modal)||(region.classList.contains('sidebar')&&isMobile&&!state.navOpen);
+    if('inert' in region)region.inert=hidden;
+    region.setAttribute('aria-hidden',String(hidden));
+  });
   const panel=document.querySelector('#primary-navigation');
-  if(panel){const mobile=window.matchMedia('(max-width:760px)').matches;panel.setAttribute('aria-hidden',String(mobile&&!state.navOpen));if('inert' in panel)panel.inert=mobile&&!state.navOpen;}
+  if(panel){const mobile=window.matchMedia('(max-width:760px)').matches;const hidden=Boolean(state.modal)||(mobile&&!state.navOpen);panel.setAttribute('aria-hidden',String(hidden));if('inert' in panel)panel.inert=hidden;}
   if(animatePage){const page=document.querySelector('.page-content');page?.classList.add('is-entering');page?.addEventListener('animationend',()=>page.classList.remove('is-entering'),{once:true});}
 }
 document.addEventListener('click',e=>{
+  const option=e.target.closest('[data-dropdown-option]');
+  if(option){chooseDropdown(option);return;}
+  const trigger=e.target.closest('[data-dropdown-trigger]');
+  if(trigger){trigger.getAttribute('aria-expanded')==='true'?closeDropdown(trigger.closest('[data-dropdown-root]')):openDropdown(trigger);return;}
+  if(!e.target.closest('[data-dropdown-root]'))closeDropdowns();
   const target=e.target.closest('[data-action],[data-page],[data-filter],[data-account],[data-asset],[data-transaction],[data-card]');
   if(!target)return;
   if(target.dataset.page){state.page=target.dataset.page;state.modal=null;state.navOpen=false;state.search='';state.filter='all';render(true);return;}
-  if(target.dataset.filter){state.filter=target.dataset.filter;render();return;}
+  if(target.dataset.filter){setActivityFilter(target.dataset.filter);return;}
   if(target.dataset.account){openModal('account',target.dataset.account);return;}
   if(target.dataset.asset){openModal('asset',target.dataset.asset);return;}
   if(target.dataset.transaction){openModal('transaction',target.dataset.transaction);return;}
   if(target.dataset.card){openModal('card',target.dataset.card);return;}
-  if(target.dataset.action==='backdrop'){if(e.target===target){state.modal=null;render();}return;}
+  if(target.dataset.action==='backdrop'){if(e.target===target){closeModal();}return;}
   if(target.dataset.action){if(target.tagName==='A')e.preventDefault();handleAction(target.dataset.action);}
 });
+document.addEventListener('focusout',e=>{
+  const root=e.target.closest('[data-dropdown-root]');
+  if(root)setTimeout(()=>{if(root.dataset.open==='true'&&!root.contains(document.activeElement))closeDropdown(root);},0);
+});
+document.addEventListener('scroll',()=>document.querySelectorAll('[data-dropdown-root][data-open="true"]').forEach(root=>positionDropdown(root.querySelector('[data-dropdown-trigger]'),root.querySelector('[role="listbox"]'))),true);
+window.addEventListener('resize',()=>document.querySelectorAll('[data-dropdown-root][data-open="true"]').forEach(root=>positionDropdown(root.querySelector('[data-dropdown-trigger]'),root.querySelector('[role="listbox"]'))));
 document.addEventListener('submit',e=>{
   if(e.target.id==='auth-form'){e.preventDefault();handleAuthSubmit(e.target);}
   if(e.target.id==='profile-form'){
@@ -366,10 +467,47 @@ document.addEventListener('input',e=>{
   if(list)list.innerHTML=items.length?items.map(transactionRow).join(''):'<div class="empty-state">No matching transactions.</div>';
   const footer=document.querySelector('.list-footer');if(footer)footer.textContent='Showing '+items.length+' of '+state.data.transactions.length+' transactions';
 });
-document.addEventListener('change',e=>{if(e.target.id==='activity-sort'){state.sort=e.target.value;render();}});
+let dropdownTypeahead='',dropdownTypeaheadTimer;
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'&&state.modal){state.modal=null;render();return;}
+  const option=e.target.closest('[data-dropdown-option]'),trigger=e.target.closest('[data-dropdown-trigger]');
+  const root=(option||trigger)?.closest('[data-dropdown-root]'),menu=root?.querySelector('[role="listbox"]');
+  if(e.key==='Escape'){const open=document.querySelector('[data-dropdown-root][data-open="true"]');if(open){closeDropdown(open,true);e.preventDefault();return;}}
+  if(menu&&root?.dataset.open==='true'&&option){
+    const options=[...menu.querySelectorAll('[data-dropdown-option]:not([aria-disabled="true"])')],index=options.indexOf(option);
+    if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();setDropdownActive(menu,(index+(e.key==='ArrowDown'?1:-1)+options.length)%options.length);return;}
+    if(e.key==='Home'||e.key==='End'){e.preventDefault();setDropdownActive(menu,e.key==='Home'?0:options.length-1);return;}
+    if(e.key==='Enter'||e.key===' '){e.preventDefault();chooseDropdown(option);return;}
+    if(e.key.length===1&&!e.ctrlKey&&!e.metaKey&&!e.altKey){
+      dropdownTypeahead+=e.key.toLocaleLowerCase();clearTimeout(dropdownTypeaheadTimer);dropdownTypeaheadTimer=setTimeout(()=>dropdownTypeahead='',650);
+      const start=Math.max(0,index+1),ordered=options.slice(start).concat(options.slice(0,start));
+      const match=ordered.find(item=>item.dataset.label.toLocaleLowerCase().startsWith(dropdownTypeahead));
+      if(match){e.preventDefault();setDropdownActive(menu,options.indexOf(match));}
+    }
+    return;
+  }
+  if(trigger&&e.key.length===1&&!e.ctrlKey&&!e.metaKey&&!e.altKey){
+    e.preventDefault();dropdownTypeahead+=e.key.toLocaleLowerCase();clearTimeout(dropdownTypeaheadTimer);dropdownTypeaheadTimer=setTimeout(()=>dropdownTypeahead='',650);
+    if(trigger.getAttribute('aria-expanded')!=='true')openDropdown(trigger);
+    const options=[...(root?.querySelectorAll('[data-dropdown-option]:not([aria-disabled="true"])')||[])],match=options.find(item=>item.dataset.label.toLocaleLowerCase().startsWith(dropdownTypeahead));
+    if(match)setDropdownActive(menu,options.indexOf(match));return;
+  }
+  if(trigger&&['ArrowDown','ArrowUp','Home','End','Enter',' '].includes(e.key)){
+    e.preventDefault();const open=trigger.getAttribute('aria-expanded')==='true';
+    if(!open)openDropdown(trigger,e.key==='Home'?0:e.key==='End'?Number.MAX_SAFE_INTEGER:null);
+    else if(e.key==='Enter'||e.key===' ')closeDropdown(root,true);
+    return;
+  }
+  if(e.key==='Escape'&&state.modal){closeModal();return;}
   if(e.key==='Escape'&&state.navOpen){setNavigation(false);return;}
+  if(e.key==='Tab'&&state.modal){
+    const dialog=document.querySelector('.modal-panel');
+    const controls=[...(dialog?.querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),a[href]')||[])].filter(el=>el.getClientRects().length);
+    if(controls.length){
+      const first=controls[0],last=controls[controls.length-1];
+      if(e.shiftKey&&(document.activeElement===first||!dialog?.contains(document.activeElement))){e.preventDefault();last.focus();}
+      else if(!e.shiftKey&&(document.activeElement===last||!dialog?.contains(document.activeElement))){e.preventDefault();first.focus();}
+    }
+  }
   if(e.key==='Tab'&&state.navOpen&&window.matchMedia('(max-width:760px)').matches){
     const panel=document.querySelector('#primary-navigation');
     const items=panel?.querySelectorAll('.main-nav .nav-item,.sidebar-bottom .nav-item');
@@ -380,4 +518,14 @@ document.addEventListener('keydown',e=>{
     }
   }
 });
-render();
+function renderIconGallery(){
+  const nav=['overview','accounts','cards','crypto','activity','analytics','settings'];
+  const inventory=Object.entries(glyphs).map(([name])=>'<article class="audit-icon"><div class="audit-art">'+icon(name,20)+'</div><div><b>'+name+'</b><small>20 px · shared outline</small></div><div class="audit-action">'+icon(name,16)+' <span>With text</span></div></article>').join('');
+  document.body.classList.remove('has-modal');
+  document.querySelector('#app').innerHTML='<main class="icon-audit"><header><p>TITAN · DEVELOPMENT ONLY</p><h1>Icon inspection</h1><span>Shared interface glyphs use a 24-unit viewBox, 1.75-unit rounded outline, exact rendered sizes, and currentColor.</span></header><section><h2>Navigation comparison · 20 px</h2><div class="audit-nav">'+nav.map((name,i)=>'<div class="audit-nav-item '+(i===3?'chosen':'')+'">'+icon(name,20)+'<span>'+name+'</span></div>').join('')+'</div></section><section><h2>Complete shared glyph inventory · 20 px with 16 px supporting sample</h2><div class="audit-grid">'+inventory+'</div></section><section><h2>Asset marks · standalone identity artwork</h2><div class="audit-assets">'+seed.assets.map(a=>assetRow(a).replace('<button','<div').replace(/ data-asset="[^"]+"/,'').replace('</button>','</div>')).join('')+'<div class="audit-asset account-letters"><b>C · S · R</b> <small>Checking, savings, reserve account symbols</small></div><div class="audit-asset titan"><span class="audit-titan-mark">T</span> <small>Titan card mark · not a payment network</small></div></div></section><section><h2>Optical size scale · same plus glyph</h2><div class="audit-scale">'+[16,18,20,24].map(size=>'<div>'+icon('plus',size)+'<small>'+size+' px</small></div>').join('')+'</div></section><footer>Development route only. Return to the product by removing <code>?icon-audit=1</code>.</footer></main>';
+  const style=document.createElement('style');
+  style.textContent='.icon-audit{min-height:100vh;padding:38px clamp(22px,5vw,70px) 60px;background:#0b0d10;color:#eeece6;font:14px/1.5 "DM Sans",sans-serif}.icon-audit header{max-width:780px;margin-bottom:36px}.icon-audit header p{color:#b5a17e;font-size:10px;letter-spacing:1.5px}.icon-audit h1{margin:4px 0 8px;font:600 32px Manrope,sans-serif}.icon-audit header span,.icon-audit small{color:#92989e}.icon-audit section{max-width:1150px;margin:0 auto 32px}.icon-audit h2{font:600 14px Manrope,sans-serif;border-bottom:1px solid rgba(255,255,255,.12);padding-bottom:10px}.audit-nav,.audit-grid,.audit-assets{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.audit-nav-item,.audit-icon,.audit-asset{display:flex;align-items:center;gap:12px;padding:13px;border:1px solid rgba(255,255,255,.09);background:#111418}.audit-nav-item{color:#a4a8ad}.audit-nav-item.chosen{color:#f0d29a;border-color:rgba(216,183,123,.35);background:#191815}.audit-icon{justify-content:space-between;gap:8px}.audit-art{width:28px;display:grid;place-items:center;color:#d6c39d}.audit-icon b,.audit-icon small{display:block}.audit-icon b{font-size:12px}.audit-icon small,.audit-icon button{font-size:9px}.audit-action{display:flex;align-items:center;gap:4px;border:0;background:none;color:#aeb2b6}.audit-assets{grid-template-columns:repeat(auto-fit,minmax(205px,1fr))}.audit-assets .asset-row{padding:9px;border:1px solid rgba(255,255,255,.09);background:#111418}.audit-assets .asset-mark{border:0;background:transparent}.audit-asset{min-height:68px;color:#d9c69f}.audit-titan-mark{width:28px;height:28px;display:grid;place-items:center;border:1px solid rgba(232,215,183,.46);border-radius:50%;font-size:12px}.audit-asset small{font-size:10px}.audit-asset svg{width:20px;height:24px;flex:none}.audit-assets .solana svg{width:22px;height:20px}.audit-scale{display:flex;align-items:center;gap:28px;padding:18px;background:#111418}.audit-scale>div{display:grid;justify-items:center;gap:8px;color:#d8c59e}.icon-audit footer{max-width:1150px;margin:auto;color:#8f969c;font-size:11px}@media(max-width:600px){.audit-icon{align-items:flex-start;flex-wrap:wrap}.audit-nav{grid-template-columns:repeat(2,1fr)}}';
+  document.head.append(style);
+}
+if((import.meta.env.DEV||import.meta.env.VERCEL_ENV==='preview')&&new URLSearchParams(location.search).get('icon-audit')==='1')renderIconGallery();else render();
+if(recoveryMessage){toast(recoveryMessage);recoveryMessage='';}
