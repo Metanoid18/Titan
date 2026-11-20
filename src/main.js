@@ -1,5 +1,6 @@
 import './styles.css';
 import './product.css';
+import { calculateTotals, filterAndSortTransactions, formatDate as fmtDate, formatMoney as money, formatTime as fmtTime, modalVariant, normalizeData } from './core.js';
 
 const DATA_KEY = 'titan-product-v1';
 const SESSION_KEY = 'titan-session-v1';
@@ -65,18 +66,21 @@ function titanSelect(id,label,options,selected,extraClass=''){
   const current=options.find(option=>option.value===selected)||options[0]||{value:'',label:'No options available'},listId=id+'-listbox',disabled=!options.some(option=>!option.disabled);
   return '<div class="titan-select '+extraClass+'" data-dropdown-root><input type="hidden" id="'+safe(id)+'" value="'+safe(current.value)+'"><button type="button" class="dropdown-trigger" role="combobox" aria-label="'+safe(label)+'" aria-haspopup="listbox" aria-expanded="false" aria-controls="'+safe(listId)+'" '+(disabled?'disabled':'')+' data-dropdown-trigger><span class="dropdown-value">'+safe(current.label)+'</span>'+icon('chevron-down',16)+'</button><div class="dropdown-menu" id="'+safe(listId)+'" role="listbox" aria-label="'+safe(label)+'" hidden>'+options.map((option,index)=>'<button type="button" class="dropdown-option" id="'+safe(listId+'-'+index)+'" role="option" aria-selected="'+(option.value===current.value)+'" '+(option.disabled?'aria-disabled="true"':'')+' tabindex="-1" data-value="'+safe(option.value)+'" data-label="'+safe(option.label)+'" data-dropdown-option>'+safe(option.label)+'<span class="dropdown-selected" aria-hidden="true">'+icon('check',16)+'</span></button>').join('')+'</div></div>';
 }
-const money = n => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(Number(n)||0);
-const fmtDate = d => new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric',year:'numeric'}).format(new Date(d));
-const fmtTime = d => new Intl.DateTimeFormat('en-US',{hour:'numeric',minute:'2-digit'}).format(new Date(d));
 const safe = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clone = v => JSON.parse(JSON.stringify(v));
 
+let recoveryMessage='';
 function loadData(){
   try {
-    const raw = JSON.parse(localStorage.getItem(DATA_KEY));
-    if(raw && Array.isArray(raw.accounts) && Array.isArray(raw.transactions) && Array.isArray(raw.cards)) return raw;
-  } catch {}
-  return clone(seed);
+    const stored=localStorage.getItem(DATA_KEY);
+    if(stored===null)return clone(seed);
+    const result=normalizeData(JSON.parse(stored),seed);
+    if(result.recovered)recoveryMessage='Some saved sample data was damaged. Usable records were kept and missing items were restored.';
+    return result.data;
+  } catch {
+    recoveryMessage='Saved data could not be read. Titan is using the sample data for this session.';
+    return clone(seed);
+  }
 }
 function saveData(){ try{localStorage.setItem(DATA_KEY,JSON.stringify(state.data));}catch{toast('Browser storage is unavailable');} }
 function readSession(){
@@ -113,9 +117,9 @@ function toast(message){
     if(current)current.dataset.visible='false';
   },2400);
 }
-function totalCash(){return state.data.accounts.reduce((sum,a)=>sum+a.balance,0);}
-function totalIncome(){return state.data.transactions.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);}
-function totalSpend(){return state.data.transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);}
+function totalCash(){return calculateTotals(state.data.accounts,state.data.transactions).cash;}
+function totalIncome(){return calculateTotals(state.data.accounts,state.data.transactions).income;}
+function totalSpend(){return calculateTotals(state.data.accounts,state.data.transactions).spending;}
 function pageTitle(){return state.page;}
 function navItem(name, glyph){
   return '<button class="nav-item '+(state.page===name?'is-active':'')+'" data-page="'+name+'" aria-label="'+name+'" '+(state.page===name?'aria-current="page"':'')+'>'+icon(glyph,20)+'<span>'+name+'</span></button>';
@@ -177,14 +181,7 @@ function cryptoPage(){
     '<div class="inline-disclaimer">'+icon('lock',16)+' Quantities are illustrative. Titan does not connect to a wallet, exchange or blockchain, and cannot send, receive or trade digital assets.</div>';
 }
 function filteredTransactions(){
-  let items=state.data.transactions.slice();
-  if(state.filter!=='all') items=items.filter(t=>t.type===state.filter);
-  if(state.search.trim()){
-    const q=state.search.toLowerCase();
-    items=items.filter(t=>(t.name+' '+t.detail+' '+t.category+' '+t.method+' '+t.account).toLowerCase().includes(q));
-  }
-  items.sort((a,b)=>state.sort==='oldest'?new Date(a.date)-new Date(b.date):new Date(b.date)-new Date(a.date));
-  return items;
+  return filterAndSortTransactions(state.data.transactions,{filter:state.filter,search:state.search,sort:state.sort});
 }
 function activityPage(){
   const items=filteredTransactions();
@@ -226,7 +223,7 @@ function modalView(){
     const c=state.data.cards.find(x=>x.id===state.selected); title=c?c.name:'Card settings';
     body=c?'<div class="settings-line"><span>Card number</span><strong>•••• '+c.last4+'</strong></div><div class="settings-line"><span>Type</span><strong>'+c.kind+'</strong></div><div class="settings-line"><span>Status</span><strong>'+(c.frozen?'Frozen':'Active')+'</strong></div><button class="secondary-button modal-submit" data-action="toggle-card">'+icon('freeze',16)+(c.frozen?'Unfreeze card':'Freeze card')+'</button><p class="modal-notice">'+icon('lock',16)+' Visual prototype only. This card cannot be used for payments.</p>':'';
   }
-  const kind=m==='account'?'account':m==='transfer'?'send':m==='add-funds'?'add':'details';
+  const kind=modalVariant(m);
   return '<div class="modal-backdrop" data-modal-kind="'+kind+'" data-action="backdrop"><section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modal-title" tabindex="-1"><div class="sheet-grabber"></div><div class="modal-topline"><span class="eyebrow">'+context+'</span><button class="modal-close" data-action="close-modal" aria-label="Close">'+icon('close',18)+'</button></div><h2 id="modal-title">'+title+'</h2>'+body+'</section></div>';
 }
 let modalReturnFocus=null;
@@ -531,3 +528,4 @@ function renderIconGallery(){
   document.head.append(style);
 }
 if((import.meta.env.DEV||import.meta.env.VERCEL_ENV==='preview')&&new URLSearchParams(location.search).get('icon-audit')==='1')renderIconGallery();else render();
+if(recoveryMessage){toast(recoveryMessage);recoveryMessage='';}
