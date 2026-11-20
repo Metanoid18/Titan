@@ -299,7 +299,7 @@ svg { display: block; flex: 0 0 auto; }
   .brand,.nav-label,.sidebar-bottom { display: none; }
   .main-nav { width: 100%; display: flex; justify-content: space-around; gap: 6px; }
   .nav-item { min-height: 50px; flex: 1; flex-direction: column; justify-content: center; gap: 3px; padding: 4px 5px; border-radius: 7px; font-size: 11px; }
-  .nav-item svg { width: 19px; height: 19px; }
+  .nav-item svg { width: 20px; height: 20px; }
   .main-area { margin-left: 0; }
   .topbar { height: 58px; flex-basis: 58px; padding-inline: 20px; }
   .mobile-menu { display: none; }
@@ -328,7 +328,6 @@ svg { display: block; flex: 0 0 auto; }
   .balance-value { font-size: clamp(30px,8.5vw,36px); letter-spacing: -1.3px; }
   .balance-actions { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 7px; margin-top: 22px; }
   .balance-actions button { min-width: 0; min-height: 42px; gap: 6px; padding: 0 7px; font-size: 12px; }
-  .balance-actions button svg { width: 15px; height: 15px; }
   .overview-grid { gap: 25px; }
   .section-title h2 { font-size: 18px; }
   .text-action { font-size: 11px; }

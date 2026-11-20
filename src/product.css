@@ -21,8 +21,8 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible { 
 .brand-mark i { width:7px;height:7px;background:var(--gold-bright); }
 .nav-label { margin-top:42px; }
 .nav-item { min-height:43px;border-radius:9px; }
-.nav-item.active { color:#f5ead5;background:linear-gradient(100deg,rgba(215,183,125,.13),rgba(215,183,125,.035));border-color:rgba(215,183,125,.15); }
-.nav-item.active svg { color:var(--gold-bright); }
+.nav-item.is-active { color:#f5ead5;background:linear-gradient(100deg,rgba(215,183,125,.13),rgba(215,183,125,.035));border-color:rgba(215,183,125,.15); }
+.nav-item.is-active svg { color:var(--gold-bright); }
 .sidebar-bottom { display:block;margin-top:auto; }
 .sidebar-note { margin:24px 8px 18px;padding:16px 14px;border:1px solid var(--line);border-radius:12px;background:linear-gradient(140deg,rgba(255,255,255,.035),rgba(255,255,255,.008)); }
 .sidebar-note p { margin:7px 0 0;color:var(--muted);font-size:12px; }
@@ -110,6 +110,9 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible { 
 .asset-mark.bitcoin { color:#e6b66e;background:rgba(230,182,110,.07); }
 .asset-mark.ethereum { color:#c7cbd2;background:rgba(199,203,210,.06); }
 .asset-mark.solana { color:#c4b4d7;background:rgba(196,180,215,.07); }
+.asset-mark svg { width:20px;height:24px;display:block; }
+.asset-mark.ethereum svg { width:17px;height:24px; }
+.asset-mark.solana svg { width:22px;height:20px; }
 .asset-copy { min-width:0;flex:1; }
 .asset-copy strong,.asset-copy small,.asset-quantity strong,.asset-quantity small { display:block; }
 .asset-copy strong { font-size:12px;font-weight:600; }
@@ -154,7 +157,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible { 
 .payment-card-foot small,.payment-card-foot strong { display:block; }
 .payment-card-foot small { color:rgba(245,239,225,.52);font-size:8px;letter-spacing:1px; }
 .payment-card-foot strong { margin-top:4px;color:#f1e8d7;font-size:10px;letter-spacing:1px; }
-.card-network { color:rgba(232,215,183,.78);font-size:22px;letter-spacing:-9px;padding-right:8px; }
+.card-mark { width:28px;height:28px;display:grid;place-items:center;border:1px solid rgba(232,215,183,.46);border-radius:50%;color:rgba(245,239,225,.82);font:600 12px Manrope,sans-serif; }
 .card-info { display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:15px; }
 .card-info strong,.card-info span { display:block; }
 .card-info strong { font-size:12px; }
@@ -165,7 +168,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible { 
 .usage-track,.bar-track,.category-track { height:4px;overflow:hidden;border-radius:10px;background:rgba(255,255,255,.08); }
 .usage-track { margin-top:9px; }
 .usage-track i,.bar-track i,.category-track i { display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#9b8157,#e0c18c); }
-.crypto-summary { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:30px; }
+.crypto-summary { width:min(850px,100%);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:30px; }
 .crypto-summary>div,.metric-card { display:flex;flex-direction:column;align-items:flex-start;gap:5px;padding:17px;border:1px solid var(--line);border-radius:12px;background:linear-gradient(145deg,rgba(29,33,37,.78),rgba(17,20,23,.82)); }
 .crypto-summary strong { margin-top:5px;font:600 19px Manrope,sans-serif; }
 .crypto-summary small,.metric-card small { color:var(--subtle);font-size:10px; }
@@ -233,7 +236,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible { 
 .demo-login p { margin:5px 0 0;color:var(--muted);font-size:10px; }
 .demo-login .text-action { font-size:10px; }
 .demo-login small { display:block;margin-top:12px;padding-top:11px;border-top:1px solid var(--line);color:#858c94;font-size:10px; }
-.auth-disclaimer { max-width:420px;margin:27px 0 0;color:#6e767d;font-size:10px;line-height:1.7;text-align:center; }
+.auth-disclaimer { max-width:420px;margin:27px 0 0;color:#a0a4aa;font-size:11px;line-height:1.7;text-align:center; }
 .auth-mobile-brand { display:none; }
 .empty-state { padding:34px 12px;color:var(--muted);font-size:12px;text-align:center; }
 body.has-modal { overflow:hidden; }
@@ -360,9 +363,9 @@ body.has-modal { overflow:hidden; }
 }
 .sidebar .nav-item svg { width:20px;height:20px; }
 .sidebar .nav-item span { white-space:nowrap; }
-.sidebar .nav-item.active { color:#f2dfbd;background:transparent!important; }
-.sidebar .nav-item.active svg { color:var(--gold-bright); }
-.sidebar .nav-item.active::before {
+.sidebar .nav-item.is-active { color:#f2dfbd;background:transparent!important; }
+.sidebar .nav-item.is-active svg { color:var(--gold-bright); }
+.sidebar .nav-item.is-active::before {
   content:"";position:absolute;left:0;top:12px;bottom:12px;width:2px;
   border-radius:2px;background:var(--gold-bright);
 }
@@ -457,13 +460,11 @@ body.has-modal { overflow:hidden; }
   border:0;border-radius:0;background:transparent;color:#d9c69f;
   transition:color 150ms ease,transform 140ms var(--ease-out);
 }
-.visibility-control svg { width:20px;height:20px; }
 .modal-close {
   width:40px;height:40px;display:grid;place-items:center;
   border:0;border-radius:0;background:transparent;color:#e3e1db;
   transition:color 150ms ease,transform 140ms var(--ease-out);
 }
-.modal-close svg { width:20px;height:20px; }
 .primary-button,.secondary-button,.danger-button,.text-action,.account-control {
   transition:color 150ms ease,background 150ms ease,border-color 150ms ease,box-shadow 150ms ease,transform 140ms var(--ease-out);
 }
@@ -511,8 +512,8 @@ body { font-variant-numeric:tabular-nums; }
 button, a, input, select { touch-action:manipulation; }
 button:disabled { opacity:.48;cursor:not-allowed; }
 :where(button,a,input,select):focus-visible { outline:2px solid var(--gold-bright);outline-offset:3px; }
-.nav-item.active { color:#f5ead5; }
-.nav-item.active svg { color:var(--gold-bright); }
+.nav-item.is-active { color:#f5ead5; }
+.nav-item.is-active svg { color:var(--gold-bright); }
 .page-content { min-width:0; }
 .hero-amount,.account-balance,.detail-balance,.metric-card strong,.crypto-summary strong { font-variant-numeric:tabular-nums lining-nums; }
 .form-input { border:1px solid var(--line-strong);border-radius:8px;background:#111519;color:var(--text); }
