@@ -230,7 +230,7 @@ svg { display: block; flex: 0 0 auto; }
 .search-box:focus-within { border-color: rgba(216,183,123,.55); }
 .search-box input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text); font-size: 14px; }
 .search-box input::placeholder { color: var(--subtle); }
-.activity-toolbar select { height: 38px; padding: 0 11px; border: 1px solid var(--line-strong); border-radius: 7px; background: var(--surface-2); color: #d8d5ce; font-size: 12px; }
+.activity-sort-select { width: 176px; flex: 0 0 176px; }
 .full-list { padding: 0; }
 .full-list .transaction-row { min-height: 74px; }
 .list-footer { padding: 13px 0; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
@@ -314,7 +314,6 @@ svg { display: block; flex: 0 0 auto; }
   .transaction-date { display: none; }
   .activity-toolbar { align-items: stretch; }
   .filter-group { order: 1; width: max-content; max-width: 100%; }
-  .activity-toolbar select { order: 2; margin-left: auto; }
   .search-box { order: 3; flex-basis: 100%; max-width: none; }
   .toast { bottom: calc(84px + env(safe-area-inset-bottom)); }
 }
@@ -341,7 +340,6 @@ svg { display: block; flex: 0 0 auto; }
   .transaction-amount { font-size: 12px; }
   .content-section { min-width: 0; }
   .filter-group button { padding-inline: 9px; font-size: 11px; }
-  .activity-toolbar select { max-width: 125px; }
   .modal-panel { padding: 21px; }
   .page-footer { padding-inline: 17px; }
 }

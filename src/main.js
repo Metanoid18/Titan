@@ -46,6 +46,7 @@ const glyphs = {
   send:'<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',
   down:'<path d="M12 4v15m-6-6 6 6 6-6"/>',
   right:'<path d="m9 18 6-6-6-6"/>',
+  'chevron-down':'<path d="m6 9 6 6 6-6"/>',
   eye:'<path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"/><circle cx="12" cy="12" r="2.5"/>',
   'eye-off':'<path d="m3 3 18 18M10.6 10.6a2 2 0 0 0 2.8 2.8"/><path d="M9.9 5.2A11.5 11.5 0 0 1 12 5c6.5 0 10 7 10 7a16 16 0 0 1-3.2 3.8M6.2 6.2C3.5 8 2 12 2 12s3.5 7 10 7c1.3 0 2.5-.3 3.5-.8"/>',
   close:'<path d="m18 6-12 12M6 6l12 12"/>',
@@ -60,6 +61,10 @@ const icon = (name, size=18) => {
   const px=Number.isFinite(Number(size))?Number(size):18;
   return '<svg class="ui-icon ui-icon--'+safe(name)+'" width="'+px+'" height="'+px+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'+(glyphs[name]||'')+'</svg>';
 };
+function titanSelect(id,label,options,selected,extraClass=''){
+  const current=options.find(option=>option.value===selected)||options[0]||{value:'',label:'No options available'},listId=id+'-listbox',disabled=!options.some(option=>!option.disabled);
+  return '<div class="titan-select '+extraClass+'" data-dropdown-root><input type="hidden" id="'+safe(id)+'" value="'+safe(current.value)+'"><button type="button" class="dropdown-trigger" role="combobox" aria-label="'+safe(label)+'" aria-haspopup="listbox" aria-expanded="false" aria-controls="'+safe(listId)+'" '+(disabled?'disabled':'')+' data-dropdown-trigger><span class="dropdown-value">'+safe(current.label)+'</span>'+icon('chevron-down',16)+'</button><div class="dropdown-menu" id="'+safe(listId)+'" role="listbox" aria-label="'+safe(label)+'" hidden>'+options.map((option,index)=>'<button type="button" class="dropdown-option" id="'+safe(listId+'-'+index)+'" role="option" aria-selected="'+(option.value===current.value)+'" '+(option.disabled?'aria-disabled="true"':'')+' tabindex="-1" data-value="'+safe(option.value)+'" data-label="'+safe(option.label)+'" data-dropdown-option>'+safe(option.label)+'<span class="dropdown-selected" aria-hidden="true">'+icon('check',16)+'</span></button>').join('')+'</div></div>';
+}
 const money = n => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(Number(n)||0);
 const fmtDate = d => new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric',year:'numeric'}).format(new Date(d));
 const fmtTime = d => new Intl.DateTimeFormat('en-US',{hour:'numeric',minute:'2-digit'}).format(new Date(d));
@@ -113,7 +118,7 @@ function totalIncome(){return state.data.transactions.filter(t=>t.type==='income
 function totalSpend(){return state.data.transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);}
 function pageTitle(){return state.page;}
 function navItem(name, glyph){
-  return '<button class="nav-item '+(state.page===name?'is-active':'')+'" data-page="'+name+'" aria-label="'+name+'" title="'+name+'" '+(state.page===name?'aria-current="page"':'')+'>'+icon(glyph,20)+'<span>'+name+'</span></button>';
+  return '<button class="nav-item '+(state.page===name?'is-active':'')+'" data-page="'+name+'" aria-label="'+name+'" '+(state.page===name?'aria-current="page"':'')+'>'+icon(glyph,20)+'<span>'+name+'</span></button>';
 }
 function authView(){
   const register=state.authMode==='register';
@@ -184,7 +189,7 @@ function filteredTransactions(){
 function activityPage(){
   const items=filteredTransactions();
   return heading('HISTORY','Activity','Search and review your account transactions.')+
-    '<section class="page-section activity-section"><div class="activity-toolbar"><div class="filter-group">'+[['all','All'],['income','Incoming'],['expense','Outgoing']].map(([v,l])=>'<button class="'+(state.filter===v?'selected':'')+'" data-filter="'+v+'">'+l+'</button>').join('')+'</div><label class="search-box">'+icon('search',16)+'<input id="activity-search" type="search" placeholder="Search transactions" value="'+safe(state.search)+'"></label><select id="activity-sort" aria-label="Sort transactions"><option value="newest" '+(state.sort==='newest'?'selected':'')+'>Newest first</option><option value="oldest" '+(state.sort==='oldest'?'selected':'')+'>Oldest first</option></select></div><div class="transaction-list full-list">'+(items.length?items.map(transactionRow).join(''):'<div class="empty-state">No matching transactions.</div>')+'</div><div class="list-footer">Showing '+items.length+' of '+state.data.transactions.length+' transactions</div></section>';
+    '<section class="page-section activity-section"><div class="activity-toolbar"><div class="filter-group" role="group" aria-label="Filter transactions">'+[['all','All'],['income','Incoming'],['expense','Outgoing']].map(([v,l])=>'<button type="button" class="'+(state.filter===v?'selected':'')+'" aria-pressed="'+(state.filter===v)+'" data-filter="'+v+'">'+l+'</button>').join('')+'</div><label class="search-box">'+icon('search',16)+'<input id="activity-search" type="search" aria-label="Search transactions" placeholder="Search transactions" value="'+safe(state.search)+'"></label>'+titanSelect('activity-sort','Sort transactions',[{value:'newest',label:'Newest first'},{value:'oldest',label:'Oldest first'}],state.sort,'activity-sort-select')+'</div><div class="transaction-list full-list">'+(items.length?items.map(transactionRow).join(''):'<div class="empty-state">No matching transactions.</div>')+'</div><div class="list-footer">Showing '+items.length+' of '+state.data.transactions.length+' transactions</div></section>';
 }
 function analyticsPage(){
   const income=totalIncome(), spend=totalSpend(), max=Math.max(income,spend,1);
@@ -207,7 +212,7 @@ function modalView(){
   let title='', body='', context='DETAILS';
   if(m==='transfer'||m==='add-funds'){
     const sending=m==='transfer'; title=sending?'Transfer funds':'Add sample funds'; context=sending?'BANKING':'BALANCE';
-    body='<p class="modal-description">'+(sending?'Move sample funds between your Titan accounts.':'Increase the local sample balance for interface testing.')+'</p>'+(sending?'<label class="field-label" for="transfer-from">From account</label><select class="form-input" id="transfer-from">'+state.data.accounts.map(a=>'<option value="'+a.id+'">'+safe(a.name)+' · '+money(a.balance)+'</option>').join('')+'</select><label class="field-label" for="transfer-to">To account</label><select class="form-input" id="transfer-to">'+state.data.accounts.map((a,i)=>'<option value="'+a.id+'" '+(i===1?'selected':'')+'>'+safe(a.name)+'</option>').join('')+'</select>':'<label class="field-label" for="fund-account">Add to account</label><select class="form-input" id="fund-account">'+state.data.accounts.map(a=>'<option value="'+a.id+'">'+safe(a.name)+'</option>').join('')+'</select>')+'<label class="field-label" for="modal-amount">Amount (USD)</label><div class="amount-input"><span>$</span><input id="modal-amount" type="number" min="0.01" max="1000000" step="0.01" placeholder="0.00" inputmode="decimal"></div><p class="modal-notice">'+icon('lock',16)+' Prototype only. No money will be moved or deposited.</p><button class="primary-button modal-submit" data-action="confirm-'+(sending?'transfer':'funds')+'">'+(sending?'Review transfer':'Add sample funds')+'</button>';
+    body='<p class="modal-description">'+(sending?'Move sample funds between your Titan accounts.':'Increase the local sample balance for interface testing.')+'</p>'+(sending?'<label class="field-label">From account</label>'+titanSelect('transfer-from','From account',state.data.accounts.map(a=>({value:a.id,label:a.name+' · '+money(a.balance)})),state.data.accounts[0]?.id,'modal-select')+'<label class="field-label">To account</label>'+titanSelect('transfer-to','To account',state.data.accounts.map(a=>({value:a.id,label:a.name})),state.data.accounts[1]?.id||state.data.accounts[0]?.id,'modal-select'):'<label class="field-label">Add to account</label>'+titanSelect('fund-account','Add to account',state.data.accounts.map(a=>({value:a.id,label:a.name})),state.data.accounts[0]?.id,'modal-select'))+'<label class="field-label" for="modal-amount">Amount (USD)</label><div class="amount-input"><span>$</span><input id="modal-amount" type="number" min="0.01" max="1000000" step="0.01" placeholder="0.00" inputmode="decimal"></div><p class="modal-notice">'+icon('lock',16)+' Prototype only. No money will be moved or deposited.</p><button class="primary-button modal-submit" data-action="confirm-'+(sending?'transfer':'funds')+'">'+(sending?'Review transfer':'Add sample funds')+'</button>';
   }else if(m==='account'){
     const a=state.data.accounts.find(x=>x.id===state.selected); title=a?a.name:'Account details';
     body=a?'<div class="detail-balance">'+money(a.balance)+'</div><div class="settings-line"><span>Account type</span><strong>'+a.type+'</strong></div><div class="settings-line"><span>Account number</span><strong>'+a.number+'</strong></div><div class="settings-line"><span>Currency</span><strong>'+a.currency+'</strong></div><button class="primary-button modal-submit" data-action="transfer">Transfer between accounts</button>':'';
@@ -274,6 +279,69 @@ function doTransfer(fund){
     state.data.transactions.unshift({id:'t'+Date.now(),name:'Internal transfer',detail:from.name+' to '+to.name,date:new Date().toISOString(),amount,type:'expense',category:'Transfer',account:from.name,method:'Internal transfer'});
   }
   saveData();state.modal=null;render();toast(fund?'Sample funds added':'Sample transfer recorded');
+}
+function setDropdownActive(menu,index){
+  const options=[...menu.querySelectorAll('[data-dropdown-option]:not([aria-disabled="true"])')];
+  if(!options.length)return;
+  const option=options[Math.max(0,Math.min(index,options.length-1))];
+  option.focus({preventScroll:true});
+  if(option.offsetTop<menu.scrollTop)menu.scrollTop=option.offsetTop;
+  else if(option.offsetTop+option.offsetHeight>menu.scrollTop+menu.clientHeight)menu.scrollTop=option.offsetTop+option.offsetHeight-menu.clientHeight;
+}
+function positionDropdown(trigger,menu){
+  if(!trigger||!menu||menu.hidden)return;
+  const rect=trigger.getBoundingClientRect(),pad=8,viewportHeight=window.innerHeight;
+  const maxHeight=Math.max(40,Math.min(248,viewportHeight-pad*2)),width=Math.min(Math.max(rect.width,176),Math.max(1,window.innerWidth-pad*2));
+  const left=Math.max(pad,Math.min(rect.left,window.innerWidth-width-pad));
+  const roomBelow=Math.max(0,viewportHeight-rect.bottom-pad),roomAbove=Math.max(0,rect.top-pad);
+  const above=roomBelow<Math.min(190,menu.scrollHeight)&&roomAbove>roomBelow;
+  const room=above?roomAbove:roomBelow,height=Math.max(40,Math.min(maxHeight,room));
+  menu.style.maxHeight=height+'px';menu.dataset.placement=above?'top':'bottom';
+  menu.style.left=left+'px';menu.style.width=width+'px';
+  menu.style.top=above?Math.max(pad,rect.top-height-6)+'px':Math.max(pad,Math.min(rect.bottom+6,viewportHeight-height-pad))+'px';
+}
+function closeDropdown(root,restoreFocus=false){
+  if(!root)return;
+  const trigger=root.querySelector('[data-dropdown-trigger]'),menu=root.querySelector('[role="listbox"]');
+  root.dataset.open='false';
+  if(trigger){trigger.setAttribute('aria-expanded','false');trigger.removeAttribute('aria-activedescendant');}
+  if(menu){menu.hidden=true;menu.style.removeProperty('top');menu.style.removeProperty('left');menu.style.removeProperty('width');menu.style.removeProperty('max-height');}
+  if(restoreFocus)trigger?.focus({preventScroll:true});
+}
+function closeDropdowns(except=null){document.querySelectorAll('[data-dropdown-root][data-open="true"]').forEach(root=>{if(root!==except)closeDropdown(root);});}
+function openDropdown(trigger,focusIndex=null){
+  const root=trigger.closest('[data-dropdown-root]'),menu=root?.querySelector('[role="listbox"]');
+  if(!root||!menu||trigger.disabled)return;
+  closeDropdowns(root);
+  menu.hidden=false;root.dataset.open='true';trigger.setAttribute('aria-expanded','true');
+  positionDropdown(trigger,menu);
+  const options=[...menu.querySelectorAll('[data-dropdown-option]:not([aria-disabled="true"])')];
+  const selected=options.findIndex(option=>option.getAttribute('aria-selected')==='true');
+  setDropdownActive(menu,focusIndex===null?Math.max(0,selected):focusIndex);
+}
+function refreshActivityRows(){
+  const items=filteredTransactions(),list=document.querySelector('.full-list');
+  if(list)list.innerHTML=items.length?items.map(transactionRow).join(''):'<div class="empty-state">No matching transactions.</div>';
+  const footer=document.querySelector('.list-footer');
+  if(footer)footer.textContent='Showing '+items.length+' of '+state.data.transactions.length+' transactions';
+}
+function setActivityFilter(filter){
+  state.filter=filter;
+  document.querySelectorAll('.filter-group [data-filter]').forEach(button=>{
+    const selected=button.dataset.filter===filter;
+    button.classList.toggle('selected',selected);button.setAttribute('aria-pressed',String(selected));
+  });
+  refreshActivityRows();
+}
+function chooseDropdown(option){
+  if(!option||option.getAttribute('aria-disabled')==='true')return;
+  const root=option.closest('[data-dropdown-root]'),trigger=root?.querySelector('[data-dropdown-trigger]'),input=root?.querySelector('input[type="hidden"]'),menu=root?.querySelector('[role="listbox"]');
+  if(!root||!trigger||!input||!menu)return;
+  input.value=option.dataset.value;
+  trigger.querySelector('.dropdown-value').textContent=option.dataset.label;
+  menu.querySelectorAll('[data-dropdown-option]').forEach(item=>item.setAttribute('aria-selected',String(item===option)));
+  if(input.id==='activity-sort'){state.sort=input.value;refreshActivityRows();}
+  closeDropdown(root,true);
 }
 function updateBalanceVisibility(){
   const hidden=state.hidden;
@@ -364,10 +432,15 @@ function render(animatePage=false){
   if(animatePage){const page=document.querySelector('.page-content');page?.classList.add('is-entering');page?.addEventListener('animationend',()=>page.classList.remove('is-entering'),{once:true});}
 }
 document.addEventListener('click',e=>{
+  const option=e.target.closest('[data-dropdown-option]');
+  if(option){chooseDropdown(option);return;}
+  const trigger=e.target.closest('[data-dropdown-trigger]');
+  if(trigger){trigger.getAttribute('aria-expanded')==='true'?closeDropdown(trigger.closest('[data-dropdown-root]')):openDropdown(trigger);return;}
+  if(!e.target.closest('[data-dropdown-root]'))closeDropdowns();
   const target=e.target.closest('[data-action],[data-page],[data-filter],[data-account],[data-asset],[data-transaction],[data-card]');
   if(!target)return;
   if(target.dataset.page){state.page=target.dataset.page;state.modal=null;state.navOpen=false;state.search='';state.filter='all';render(true);return;}
-  if(target.dataset.filter){state.filter=target.dataset.filter;render();return;}
+  if(target.dataset.filter){setActivityFilter(target.dataset.filter);return;}
   if(target.dataset.account){openModal('account',target.dataset.account);return;}
   if(target.dataset.asset){openModal('asset',target.dataset.asset);return;}
   if(target.dataset.transaction){openModal('transaction',target.dataset.transaction);return;}
@@ -375,6 +448,12 @@ document.addEventListener('click',e=>{
   if(target.dataset.action==='backdrop'){if(e.target===target){closeModal();}return;}
   if(target.dataset.action){if(target.tagName==='A')e.preventDefault();handleAction(target.dataset.action);}
 });
+document.addEventListener('focusout',e=>{
+  const root=e.target.closest('[data-dropdown-root]');
+  if(root)setTimeout(()=>{if(root.dataset.open==='true'&&!root.contains(document.activeElement))closeDropdown(root);},0);
+});
+document.addEventListener('scroll',()=>document.querySelectorAll('[data-dropdown-root][data-open="true"]').forEach(root=>positionDropdown(root.querySelector('[data-dropdown-trigger]'),root.querySelector('[role="listbox"]'))),true);
+window.addEventListener('resize',()=>document.querySelectorAll('[data-dropdown-root][data-open="true"]').forEach(root=>positionDropdown(root.querySelector('[data-dropdown-trigger]'),root.querySelector('[role="listbox"]'))));
 document.addEventListener('submit',e=>{
   if(e.target.id==='auth-form'){e.preventDefault();handleAuthSubmit(e.target);}
   if(e.target.id==='profile-form'){
@@ -391,8 +470,36 @@ document.addEventListener('input',e=>{
   if(list)list.innerHTML=items.length?items.map(transactionRow).join(''):'<div class="empty-state">No matching transactions.</div>';
   const footer=document.querySelector('.list-footer');if(footer)footer.textContent='Showing '+items.length+' of '+state.data.transactions.length+' transactions';
 });
-document.addEventListener('change',e=>{if(e.target.id==='activity-sort'){state.sort=e.target.value;render();}});
+let dropdownTypeahead='',dropdownTypeaheadTimer;
 document.addEventListener('keydown',e=>{
+  const option=e.target.closest('[data-dropdown-option]'),trigger=e.target.closest('[data-dropdown-trigger]');
+  const root=(option||trigger)?.closest('[data-dropdown-root]'),menu=root?.querySelector('[role="listbox"]');
+  if(e.key==='Escape'){const open=document.querySelector('[data-dropdown-root][data-open="true"]');if(open){closeDropdown(open,true);e.preventDefault();return;}}
+  if(menu&&root?.dataset.open==='true'&&option){
+    const options=[...menu.querySelectorAll('[data-dropdown-option]:not([aria-disabled="true"])')],index=options.indexOf(option);
+    if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();setDropdownActive(menu,(index+(e.key==='ArrowDown'?1:-1)+options.length)%options.length);return;}
+    if(e.key==='Home'||e.key==='End'){e.preventDefault();setDropdownActive(menu,e.key==='Home'?0:options.length-1);return;}
+    if(e.key==='Enter'||e.key===' '){e.preventDefault();chooseDropdown(option);return;}
+    if(e.key.length===1&&!e.ctrlKey&&!e.metaKey&&!e.altKey){
+      dropdownTypeahead+=e.key.toLocaleLowerCase();clearTimeout(dropdownTypeaheadTimer);dropdownTypeaheadTimer=setTimeout(()=>dropdownTypeahead='',650);
+      const start=Math.max(0,index+1),ordered=options.slice(start).concat(options.slice(0,start));
+      const match=ordered.find(item=>item.dataset.label.toLocaleLowerCase().startsWith(dropdownTypeahead));
+      if(match){e.preventDefault();setDropdownActive(menu,options.indexOf(match));}
+    }
+    return;
+  }
+  if(trigger&&e.key.length===1&&!e.ctrlKey&&!e.metaKey&&!e.altKey){
+    e.preventDefault();dropdownTypeahead+=e.key.toLocaleLowerCase();clearTimeout(dropdownTypeaheadTimer);dropdownTypeaheadTimer=setTimeout(()=>dropdownTypeahead='',650);
+    if(trigger.getAttribute('aria-expanded')!=='true')openDropdown(trigger);
+    const options=[...(root?.querySelectorAll('[data-dropdown-option]:not([aria-disabled="true"])')||[])],match=options.find(item=>item.dataset.label.toLocaleLowerCase().startsWith(dropdownTypeahead));
+    if(match)setDropdownActive(menu,options.indexOf(match));return;
+  }
+  if(trigger&&['ArrowDown','ArrowUp','Home','End','Enter',' '].includes(e.key)){
+    e.preventDefault();const open=trigger.getAttribute('aria-expanded')==='true';
+    if(!open)openDropdown(trigger,e.key==='Home'?0:e.key==='End'?Number.MAX_SAFE_INTEGER:null);
+    else if(e.key==='Enter'||e.key===' ')closeDropdown(root,true);
+    return;
+  }
   if(e.key==='Escape'&&state.modal){closeModal();return;}
   if(e.key==='Escape'&&state.navOpen){setNavigation(false);return;}
   if(e.key==='Tab'&&state.modal){
