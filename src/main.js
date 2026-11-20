@@ -1,5 +1,6 @@
 import './styles.css';
 import './product.css';
+import './quality.css';
 
 const DATA_KEY = 'titan-product-v1';
 const SESSION_KEY = 'titan-session-v1';
@@ -220,9 +221,26 @@ function modalView(){
     const c=state.data.cards.find(x=>x.id===state.selected); title=c?c.name:'Card settings';
     body=c?'<div class="settings-line"><span>Card number</span><strong>•••• '+c.last4+'</strong></div><div class="settings-line"><span>Type</span><strong>'+c.kind+'</strong></div><div class="settings-line"><span>Status</span><strong>'+(c.frozen?'Frozen':'Active')+'</strong></div><button class="secondary-button modal-submit" data-action="toggle-card">'+icon('freeze',16)+(c.frozen?'Unfreeze card':'Freeze card')+'</button><p class="modal-notice">'+icon('lock',15)+' Visual prototype only. This card cannot be used for payments.</p>':'';
   }
-  return '<div class="modal-backdrop" data-action="backdrop"><section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="sheet-grabber"></div><div class="modal-topline"><span class="eyebrow">'+context+'</span><button class="modal-close" data-action="close-modal" aria-label="Close">'+icon('close',17)+'</button></div><h2 id="modal-title">'+title+'</h2>'+body+'</section></div>';
+  return '<div class="modal-backdrop" data-action="backdrop"><section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modal-title" tabindex="-1"><div class="sheet-grabber"></div><div class="modal-topline"><span class="eyebrow">'+context+'</span><button class="modal-close" data-action="close-modal" aria-label="Close">'+icon('close',17)+'</button></div><h2 id="modal-title">'+title+'</h2>'+body+'</section></div>';
 }
-function openModal(name,id=null){state.modal=name;state.selected=id;render();const f=document.querySelector('#modal-amount');if(f)f.focus();}
+let modalReturnFocus=null;
+let modalReturnSelector='';
+function openModal(name,id=null){
+  modalReturnFocus=document.activeElement;
+  const opener=modalReturnFocus;
+  const key=['account','asset','transaction','card'].find(k=>opener?.dataset?.[k]);
+  modalReturnSelector=key?'['+`data-${key}`+'="'+CSS.escape(opener.dataset[key])+'"]':opener?.dataset?.action?'[data-action="'+CSS.escape(opener.dataset.action)+'"]':'';
+  state.modal=name;state.selected=id;render();
+  const panel=document.querySelector('.modal-panel');
+  const focusTarget=document.querySelector('#modal-amount')||panel?.querySelector('button,select,input');
+  focusTarget?.focus({preventScroll:true});
+}
+function closeModal(){
+  state.modal=null;render();
+  const restored=modalReturnFocus?.isConnected?modalReturnFocus:(modalReturnSelector?document.querySelector(modalReturnSelector):null);
+  restored?.focus({preventScroll:true});
+  modalReturnFocus=null;modalReturnSelector='';
+}
 function signIn(email,name='Alex Morgan'){
   const clean=email.trim().toLowerCase();
   state.session={email:clean,name};
@@ -301,7 +319,7 @@ function setNavigation(open){
   }
 }
 function handleAction(a){
-  if(a==='close-modal'){state.modal=null;render();return;}
+  if(a==='close-modal'){closeModal();return;}
   if(a==='toggle-balance'){state.hidden=!state.hidden;updateBalanceVisibility();return;}
   if(a==='transfer'||a==='add-funds'){openModal(a);return;}
   if(a==='confirm-transfer'||a==='confirm-funds'){doTransfer(a==='confirm-funds');return;}
@@ -347,7 +365,7 @@ document.addEventListener('click',e=>{
   if(target.dataset.asset){openModal('asset',target.dataset.asset);return;}
   if(target.dataset.transaction){openModal('transaction',target.dataset.transaction);return;}
   if(target.dataset.card){openModal('card',target.dataset.card);return;}
-  if(target.dataset.action==='backdrop'){if(e.target===target){state.modal=null;render();}return;}
+  if(target.dataset.action==='backdrop'){if(e.target===target){closeModal();}return;}
   if(target.dataset.action){if(target.tagName==='A')e.preventDefault();handleAction(target.dataset.action);}
 });
 document.addEventListener('submit',e=>{
@@ -368,8 +386,17 @@ document.addEventListener('input',e=>{
 });
 document.addEventListener('change',e=>{if(e.target.id==='activity-sort'){state.sort=e.target.value;render();}});
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'&&state.modal){state.modal=null;render();return;}
+  if(e.key==='Escape'&&state.modal){closeModal();return;}
   if(e.key==='Escape'&&state.navOpen){setNavigation(false);return;}
+  if(e.key==='Tab'&&state.modal){
+    const dialog=document.querySelector('.modal-panel');
+    const controls=[...(dialog?.querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),a[href]')||[])].filter(el=>el.getClientRects().length);
+    if(controls.length){
+      const first=controls[0],last=controls[controls.length-1];
+      if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+      else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+    }
+  }
   if(e.key==='Tab'&&state.navOpen&&window.matchMedia('(max-width:760px)').matches){
     const panel=document.querySelector('#primary-navigation');
     const items=panel?.querySelectorAll('.main-nav .nav-item,.sidebar-bottom .nav-item');
