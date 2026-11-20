@@ -1,6 +1,5 @@
 import './styles.css';
 import './product.css';
-import './quality.css';
 
 const DATA_KEY = 'titan-product-v1';
 const SESSION_KEY = 'titan-session-v1';
@@ -352,8 +351,14 @@ function render(animatePage=false){
   }[state.page]||overviewPage)()):authView();
   document.body.classList.toggle('has-modal',Boolean(state.modal));
   document.body.classList.toggle('has-nav-open',Boolean(state.navOpen && window.matchMedia('(max-width:760px)').matches));
+  const isMobile=window.matchMedia('(max-width:760px)').matches;
+  document.querySelectorAll('.main-area,.sidebar').forEach(region=>{
+    const hidden=Boolean(state.modal)||(region.classList.contains('sidebar')&&isMobile&&!state.navOpen);
+    if('inert' in region)region.inert=hidden;
+    region.setAttribute('aria-hidden',String(hidden));
+  });
   const panel=document.querySelector('#primary-navigation');
-  if(panel){const mobile=window.matchMedia('(max-width:760px)').matches;panel.setAttribute('aria-hidden',String(mobile&&!state.navOpen));if('inert' in panel)panel.inert=mobile&&!state.navOpen;}
+  if(panel){const mobile=window.matchMedia('(max-width:760px)').matches;const hidden=Boolean(state.modal)||(mobile&&!state.navOpen);panel.setAttribute('aria-hidden',String(hidden));if('inert' in panel)panel.inert=hidden;}
   if(animatePage){const page=document.querySelector('.page-content');page?.classList.add('is-entering');page?.addEventListener('animationend',()=>page.classList.remove('is-entering'),{once:true});}
 }
 document.addEventListener('click',e=>{
@@ -393,8 +398,8 @@ document.addEventListener('keydown',e=>{
     const controls=[...(dialog?.querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),a[href]')||[])].filter(el=>el.getClientRects().length);
     if(controls.length){
       const first=controls[0],last=controls[controls.length-1];
-      if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
-      else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+      if(e.shiftKey&&(document.activeElement===first||!dialog?.contains(document.activeElement))){e.preventDefault();last.focus();}
+      else if(!e.shiftKey&&(document.activeElement===last||!dialog?.contains(document.activeElement))){e.preventDefault();first.focus();}
     }
   }
   if(e.key==='Tab'&&state.navOpen&&window.matchMedia('(max-width:760px)').matches){
